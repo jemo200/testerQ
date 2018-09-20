@@ -155,7 +155,7 @@ public class ServerThread extends Thread {
     }
         
     private boolean validMove(String contents) {
-        return " \u2654\u2655\u2656\u2657\u2658\u2659\u265A\u265B\u265C\u265D\u265E\u265F\\u001B[42m \\u001B[0m".contains(contents);
+        return " \u263A\u263B\u2665\u2666\u2663\u2660?".contains(contents);
     }
     
     private void handleMove(String[][] worldArray, Direction dir, int playerX, int playerY, int numMoves) {

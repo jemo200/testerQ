@@ -23,7 +23,7 @@ public class NetworkServer {
 
     private static HashMap<String, PrintWriter> writers = new HashMap<String, PrintWriter>();
     
-    public static MapManager mapManager = new MapManager();;
+    public static MapManager mapManager = new MapManager();
     
     private NetworkServer() {
         

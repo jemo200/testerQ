@@ -18,7 +18,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import testerq.core.Member;
-import testerq.core.map.Area1;
+import testerq.core.map.MapManager;
+import testerq.server.NetworkServer;
 /**
  *
  * @author emoj
@@ -33,6 +34,8 @@ public class Main {
     
     private static HashMap<String, Member> members = new HashMap<String, Member>();
     private static LinkedList<String> events = new LinkedList<>();
+    public static MapManager mapManager = new MapManager();
+    private static String[][] currentMap;
 
     public static void main(String[] args) {
         String hostName = args[0];
@@ -108,7 +111,12 @@ public class Main {
         int x = Integer.parseInt(chunks[1]);
         int y = Integer.parseInt(chunks[2]);
         String avatar = chunks[3];
-        members.put(name, new Member(name, x, y, avatar));
+        Member mem = new Member(name, x, y, avatar);
+        mem.worldZone = "area1zone1";
+        if(name.equals(Main.name)) {
+            currentMap = mapManager.zones.get(mem.worldZone).zone2DArray;
+        }
+        members.put(name, mem);
         clearMap();
         printMap();
         
@@ -122,10 +130,10 @@ public class Main {
         for(int i=player.cellX - (viewHeight / 2); i<(player.cellX - (viewHeight / 2)) + viewHeight; i++) {
             String line = "";
             for(int j=player.cellY - (viewWidth / 2); j< (player.cellY - (viewWidth / 2)) + viewWidth; j++) {
-                if (i < 0 || j < 0 || i >= Area1.zone1.length || j >= Area1.zone1[0].length) {
+                if (i < 0 || j < 0 || i >= currentMap.length || j >= currentMap[0].length) {
                     line += "@";
                 } else {
-                    line += Area1.zone1[i][j];
+                    line += currentMap[i][j];
                 }
             }
             System.out.println(line);
@@ -159,15 +167,15 @@ public class Main {
     }
     
     public static void clearMap() {
-        for(int i=0; i<Area1.zone1.length; i++) {
-            for(int j=0; j<Area1.zone1[i].length; j++) {
-                if("\u2654\u2655\u2656\u2657\u2658\u2659\u265A\u265B\u265C\u265D\u265E\u265F".contains(Area1.zone1[i][j])) {
-                    Area1.zone1[i][j] = " ";
+        for(int i=0; i<currentMap.length; i++) {
+            for(int j=0; j<currentMap[i].length; j++) {
+                if("\u263A\u263B\u2665\u2666\u2663\u2660".contains(currentMap[i][j])) {
+                    currentMap[i][j] = " ";
                 }
             }
         }
         for (Map.Entry<String, Member> entry : members.entrySet()) {
-            Area1.zone1[entry.getValue().cellX][entry.getValue().cellY] = entry.getValue().avatar;
+            currentMap[entry.getValue().cellX][entry.getValue().cellY] = entry.getValue().avatar;
         }
     }
     
@@ -178,31 +186,19 @@ public class Main {
     }
     
     public static void getAvatar() {
-        String fromUser = Main.console.readLine("Choose Avatar 1)\u2654 2)\u2655 3)\u2656 4)\u2657 5)\u2658 6)\u2659 7)\u265A 8)\u265B 9)\u265C 10)\u265D 11)\u265E 12)\u265F");
+        String fromUser = Main.console.readLine("Choose Avatar 1)\u263A 2)\u263B 3)\u2665 4)\u2666 5)\u2663 6)\u2660");
         if (fromUser.compareTo("1") == 0) {
-            Main.mOut.println("\u2654");
+            Main.mOut.println("\u263A");
         } else if (fromUser.compareTo("2") == 0) {
-            Main.mOut.println("\u2655");
+            Main.mOut.println("\u263B");
         } else if (fromUser.compareTo("3") == 0) {
-            Main.mOut.println("\u2656");
+            Main.mOut.println("\u2665");
         } else if (fromUser.compareTo("4") == 0) {
-            Main.mOut.println("\u2657");
+            Main.mOut.println("\u2666");
         } else if (fromUser.compareTo("5") == 0) {
-            Main.mOut.println("\u2658");
+            Main.mOut.println("\u2663");
         } else if (fromUser.compareTo("6") == 0) {
-            Main.mOut.println("\u2659");
-        } else if (fromUser.compareTo("7") == 0) {
-            Main.mOut.println("\u265A");
-        } else if (fromUser.compareTo("8") == 0) {
-            Main.mOut.println("\u265B");
-        } else if (fromUser.compareTo("9") == 0) {
-            Main.mOut.println("\u265C");
-        } else if (fromUser.compareTo("10") == 0) {
-            Main.mOut.println("\u265D");
-        } else if (fromUser.compareTo("111") == 0) {
-            Main.mOut.println("\u265E");
-        } else if (fromUser.compareTo("12") == 0) {
-            Main.mOut.println("\u265F");
+            Main.mOut.println("\u2660");
         }
     }
     

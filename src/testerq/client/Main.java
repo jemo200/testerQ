@@ -1,0 +1,253 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package testerq.client;
+
+import java.io.BufferedReader;
+import java.io.Console;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import testerq.core.Member;
+import testerq.core.map.Area1;
+/**
+ *
+ * @author emoj
+ */
+public class Main {
+    static String name;
+    static int viewWidth = 40;
+    static int viewHeight = viewWidth / 2;
+    static Console console = System.console();
+    static PrintWriter mOut;
+    static boolean signedIn = false;
+    
+    private static HashMap<String, Member> members = new HashMap<String, Member>();
+    private static LinkedList<String> events = new LinkedList<>();
+
+    public static void main(String[] args) {
+        String hostName = args[0];
+        int portNumber = Integer.parseInt(args[1]);
+        
+        if (console == null) {
+            System.out.println("Console is not supported");
+            System.exit(1);
+        }
+
+        try {
+            Socket clientSocket = new Socket(hostName, portNumber);
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+            mOut = out;
+            BufferedReader in = new BufferedReader(
+                new InputStreamReader(clientSocket.getInputStream()));
+            
+            new InsHandler(in).start();
+            
+            String fromUser = "";
+
+            while (true) {
+                if (signedIn) {
+                    Thread.sleep(300);
+                    fromUser = console.readLine("action: ");
+                    if (fromUser != null) {
+                        if (fromUser.split(" ")[0].compareTo("config") != 0) {
+                            out.println("command::" + fromUser);
+                        } else {
+                            if (fromUser.split(" ")[1].compareTo("vwidth") == 0) {
+                                viewWidth = Integer.parseInt(fromUser.split(" ")[2]);
+                                clearMap();
+                                printMap();
+                            } else if (fromUser.split(" ")[1].compareTo("vheight") == 0) {
+                                viewHeight = Integer.parseInt(fromUser.split(" ")[2]);
+                                clearMap();
+                                printMap();
+                            }
+                        }
+                        //clearMap();
+                        //printMap();
+                    } else {
+                        out.close();
+                        in.close();
+                        clientSocket.close();
+                    }
+                } else {
+                    Thread.sleep(500);
+                }
+            }
+        } catch (IOException e) {
+            System.out.println(e);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }
+    
+    private static void handlePositionSync(String syncData) {
+        String[] chunks = syncData.split(Pattern.quote("||"));
+        String name = chunks[0];
+        int cellX = Integer.parseInt(chunks[1]);
+        int cellY = Integer.parseInt(chunks[2]);
+        members.get(name).cellX = cellX;
+        members.get(name).cellY = cellY;
+        clearMap();
+        printMap();
+    }
+
+    private static void handleSpawn(String spawnData) {
+        String[] chunks = spawnData.split(Pattern.quote("++"));
+        String name = chunks[0];
+        int x = Integer.parseInt(chunks[1]);
+        int y = Integer.parseInt(chunks[2]);
+        String avatar = chunks[3];
+        members.put(name, new Member(name, x, y, avatar));
+        clearMap();
+        printMap();
+        
+    }
+    
+    private static void printMap() {
+        //clearConsole();
+        //PRINT MAP
+        System.out.println(System.getProperty("line.separator"));
+        Member player = members.get(name);
+        for(int i=player.cellX - (viewHeight / 2); i<(player.cellX - (viewHeight / 2)) + viewHeight; i++) {
+            String line = "";
+            for(int j=player.cellY - (viewWidth / 2); j< (player.cellY - (viewWidth / 2)) + viewWidth; j++) {
+                if (i < 0 || j < 0 || i >= Area1.zone1.length || j >= Area1.zone1[0].length) {
+                    line += "@";
+                } else {
+                    line += Area1.zone1[i][j];
+                }
+            }
+            System.out.println(line);
+        }
+        //PRINT ACTIVE TAB
+        String line = "";
+        if(events.size() > 10) {
+            for (int i = 9; i >= 0; i--) {
+                System.out.println(events.get(i));
+            }
+        } else {
+            if (events.size() != 0) {
+                for (int i = events.size() - 1; i >= 0; i--) {
+                    System.out.println(events.get(i));
+                }
+            }
+            for (int i = 0; i < 10 - events.size(); i++) {
+                System.out.println("~");
+            }
+        }
+        System.out.println(line);
+    }
+    
+    public final static void clearConsole() {
+        try {
+        if (System.getProperty("os.name").contains("Windows"))
+            new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+        else
+            Runtime.getRuntime().exec("clear");
+        } catch (IOException | InterruptedException ex) {}
+    }
+    
+    public static void clearMap() {
+        for(int i=0; i<Area1.zone1.length; i++) {
+            for(int j=0; j<Area1.zone1[i].length; j++) {
+                if("\u2654\u2655\u2656\u2657\u2658\u2659\u265A\u265B\u265C\u265D\u265E\u265F".contains(Area1.zone1[i][j])) {
+                    Area1.zone1[i][j] = " ";
+                }
+            }
+        }
+        for (Map.Entry<String, Member> entry : members.entrySet()) {
+            Area1.zone1[entry.getValue().cellX][entry.getValue().cellY] = entry.getValue().avatar;
+        }
+    }
+    
+    public static void getUsername() {
+        String fromUser = Main.console.readLine("Username: ");
+        Main.name = fromUser;
+        Main.mOut.println(fromUser);
+    }
+    
+    public static void getAvatar() {
+        String fromUser = Main.console.readLine("Choose Avatar 1)\u2654 2)\u2655 3)\u2656 4)\u2657 5)\u2658 6)\u2659 7)\u265A 8)\u265B 9)\u265C 10)\u265D 11)\u265E 12)\u265F");
+        if (fromUser.compareTo("1") == 0) {
+            Main.mOut.println("\u2654");
+        } else if (fromUser.compareTo("2") == 0) {
+            Main.mOut.println("\u2655");
+        } else if (fromUser.compareTo("3") == 0) {
+            Main.mOut.println("\u2656");
+        } else if (fromUser.compareTo("4") == 0) {
+            Main.mOut.println("\u2657");
+        } else if (fromUser.compareTo("5") == 0) {
+            Main.mOut.println("\u2658");
+        } else if (fromUser.compareTo("6") == 0) {
+            Main.mOut.println("\u2659");
+        } else if (fromUser.compareTo("7") == 0) {
+            Main.mOut.println("\u265A");
+        } else if (fromUser.compareTo("8") == 0) {
+            Main.mOut.println("\u265B");
+        } else if (fromUser.compareTo("9") == 0) {
+            Main.mOut.println("\u265C");
+        } else if (fromUser.compareTo("10") == 0) {
+            Main.mOut.println("\u265D");
+        } else if (fromUser.compareTo("111") == 0) {
+            Main.mOut.println("\u265E");
+        } else if (fromUser.compareTo("12") == 0) {
+            Main.mOut.println("\u265F");
+        }
+    }
+    
+    private static class InsHandler extends Thread{
+        private BufferedReader ins;
+        
+        InsHandler(BufferedReader ins) {
+            this.ins = ins;
+        }
+        String input;
+        public void run() {
+            
+            try {
+                while((input = ins.readLine()) != null) {
+                    if (input.compareTo("Username:") == 0) {
+                        Main.getUsername();
+                    } else if (input.compareTo("Logged In Successfully") == 0) {
+                        break;
+                    }
+                }
+                
+                while((input = ins.readLine()) != null) {
+                    if (input.compareTo("Avatar") == 0) {
+                        Main.getAvatar();
+                    } else if (input.compareTo("Avatar Chosen") == 0) {
+                        Main.signedIn = true;
+                        break;
+                    }
+                }
+                
+                while ((input = ins.readLine()) != null) {
+                    events.push(input);
+                    if (input.equals("Bye.")) {
+                        break;
+                    } else if (input.split(Pattern.quote("||")).length > 1) {
+                        Main.handlePositionSync(input);
+                    } else if (input.split(Pattern.quote("++")).length > 1) {
+                        Main.handleSpawn(input);
+                    }
+                }
+                
+            } catch (IOException ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+    
+}

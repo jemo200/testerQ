@@ -156,7 +156,8 @@ public class ServerThread extends Thread {
     }
         
     private boolean validMove(String contents) {
-        return " \u263A\u263B\u2665\u2666\u2663\u2660?".contains(contents);
+        System.out.println("contents " + contents);
+        return " \u263A\u263B\u2665\u2666\u2663\u2660".contains(contents);
     }
     
     private boolean isTransfer(String contents) {
@@ -219,6 +220,10 @@ public class ServerThread extends Thread {
                     } else if (dir == Direction.East || dir == Direction.West) {
                         trans = NetworkServer.mapManager.transfers.get(playerX + "" + nextCellY);
                     }
+                    member.cellX = trans.x;
+                    member.cellY = trans.y;
+                    member.worldZone = trans.map;
+                    NetworkServer.getMembers().put(member.name, member);
                     NetworkServer.Broadcast(member.name + "++" + trans.x + "++" + trans.y + "++" + member.avatar + "++" + trans.map);
                     break;
                 } else {
@@ -272,20 +277,24 @@ public class ServerThread extends Thread {
                 NetworkServer.getMembers().get(member.name).cellY = nextCellY;
                 NetworkServer.Broadcast(member.name + "||" + playerX + "||" + nextCellY);
             } else if (transfer) {
-                    //Unspawn player
-                    NetworkServer.Broadcast(member.name + "--");
-                    //Spawn player in new map
-                    MapTransfer trans = null;
-                    System.out.println("trans " + nextCellX + " " + playerY);
-                    if (dir == Direction.North || dir == Direction.South) {
-                        System.out.println(NetworkServer.mapManager.transfers.size());
-                        trans = NetworkServer.mapManager.transfers.get(nextCellX + "" + playerY);
-                        System.out.println(trans);
-                    } else if (dir == Direction.East || dir == Direction.West) {
-                        trans = NetworkServer.mapManager.transfers.get(playerX + "" + nextCellY);
-                    }
-                    NetworkServer.Broadcast(member.name + "++" + trans.x + "++" + trans.y + "++" + member.avatar + "++" + trans.map);
+                //Unspawn player
+                NetworkServer.Broadcast(member.name + "--");
+                //Spawn player in new map
+                MapTransfer trans = null;
+                System.out.println("trans " + nextCellX + " " + playerY);
+                if (dir == Direction.North || dir == Direction.South) {
+                    System.out.println(NetworkServer.mapManager.transfers.size());
+                    trans = NetworkServer.mapManager.transfers.get(nextCellX + "" + playerY);
+                    System.out.println(trans);
+                } else if (dir == Direction.East || dir == Direction.West) {
+                    trans = NetworkServer.mapManager.transfers.get(playerX + "" + nextCellY);
                 }
+                member.cellX = trans.x;
+                member.cellY = trans.y;
+                member.worldZone = trans.map;
+                NetworkServer.getMembers().put(member.name, member);
+                NetworkServer.Broadcast(member.name + "++" + trans.x + "++" + trans.y + "++" + member.avatar + "++" + trans.map);
+            }
         }
     }
 }

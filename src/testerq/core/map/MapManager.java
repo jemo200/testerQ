@@ -39,7 +39,7 @@ public class MapManager {
         trans2.x = 13;
         trans2.y = 18;
         trans2.map = "area1zone1";
-        transfers.put("910", trans2);
+        transfers.put("109", trans2);
     }
     
     public static Map<String, MapZone> zones;

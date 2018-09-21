@@ -9,13 +9,14 @@ import java.io.BufferedReader;
 import java.io.Console;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import testerq.core.Member;
 import testerq.core.map.MapManager;
@@ -35,6 +36,8 @@ public class Main {
     private static LinkedList<String> events = new LinkedList<>();
     public static MapManager mapManager = new MapManager();
     private static String[][] currentMap;
+    
+    static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase(Locale.ENGLISH).contains("win");
 
     public static void main(String[] args) {
         String hostName = args[0];
@@ -43,6 +46,15 @@ public class Main {
         if (console == null) {
             System.out.println("Console is not supported");
             System.exit(1);
+        }
+        if(IS_WINDOWS) {
+            try {
+                new ProcessBuilder("cmd", "/c", "chcp 65001").inheritIO().start().waitFor();
+                System.setOut(new PrintStream(System.out, true, "UTF-8"));
+            } catch (UnsupportedEncodingException | InterruptedException ex) {
+            } catch (IOException ex) {
+                System.out.println("fail");
+            }
         }
 
         try {
@@ -88,7 +100,6 @@ public class Main {
         } catch (IOException e) {
             System.out.println(e);
         } catch (InterruptedException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
         
     }
@@ -127,6 +138,8 @@ public class Main {
         String name = chunks[0];
 
         members.remove(name);
+        clearMap();
+        printMap();
         
     }
     
@@ -251,7 +264,6 @@ public class Main {
                 }
                 
             } catch (IOException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }

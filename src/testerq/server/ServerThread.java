@@ -9,14 +9,15 @@ import java.net.Socket;
 import java.util.Map;
 import java.util.regex.Pattern;
 import testerq.core.Direction;
+import testerq.core.MapTransfer;
 import testerq.core.Member;
 
 public class ServerThread extends Thread {
     Member member;
     int gridX = 0;
     int gridY = 0;
-    int cellX = 5;
-    int cellY = 5;
+    int cellX = 15;
+    int cellY = 15;
     int nextCellX = 0;
     int nextCellY = 0;
     String input = null;
@@ -59,14 +60,14 @@ public class ServerThread extends Thread {
             } 
             
             //send spawn broadcast
-            System.out.println("broadcasting " + member.name + "++" + member.cellX + "++" + member.cellY + "++" + member.avatar);
-            NetworkServer.Broadcast(member.name + "++" + member.cellX + "++" + member.cellY + "++" + member.avatar);
+            System.out.println("broadcasting " + member.name + "++" + member.cellX + "++" + member.cellY + "++" + member.avatar + "++" + member.worldZone);
+            NetworkServer.Broadcast(member.name + "++" + member.cellX + "++" + member.cellY + "++" + member.avatar + "++" + member.worldZone);
             
             //spawn all other currently active members
 
             for (Map.Entry<String, Member> entry : NetworkServer.getMembers().entrySet()) {
                 if(!entry.getKey().equals(member.name)) {
-                    outs.println(entry.getValue().name + "++" + entry.getValue().cellX + "++" + entry.getValue().cellY + "++" + entry.getValue().avatar);
+                    outs.println(entry.getValue().name + "++" + entry.getValue().cellX + "++" + entry.getValue().cellY + "++" + entry.getValue().avatar + "++" + entry.getValue().worldZone);
                 }
             }
 
@@ -158,26 +159,43 @@ public class ServerThread extends Thread {
         return " \u263A\u263B\u2665\u2666\u2663\u2660?".contains(contents);
     }
     
+    private boolean isTransfer(String contents) {
+        return "I".contains(contents);
+    }
+    
     private void handleMove(String[][] worldArray, Direction dir, int playerX, int playerY, int numMoves) {
         if (numMoves != 1) {
             for (int i = 0; i < numMoves; i++) {
                 boolean valid = false;
+                boolean transfer = false;
                 if (null != dir) switch (dir) {
                     case North:
                         nextCellX = playerX - 1;
                         valid = validMove(worldArray[nextCellX][playerY]);
+                        if (!valid) {
+                            transfer = isTransfer(worldArray[nextCellX][playerY]);
+                        }
                         break;
                     case East:
                         nextCellY = playerY + 1;
                         valid = validMove(worldArray[playerX][nextCellY]);
+                        if (!valid) {
+                            transfer = isTransfer(worldArray[playerX][nextCellY]);
+                        }
                         break;
                     case South:
                         nextCellX = playerX + 1;
                         valid = validMove(worldArray[nextCellX][playerY]);
+                        if (!valid) {
+                            transfer = isTransfer(worldArray[nextCellX][playerY]);
+                        }
                         break;
                     case West:
                         nextCellY = playerY - 1;
                         valid = validMove(worldArray[playerX][nextCellY]);
+                        if (!valid) {
+                            transfer = isTransfer(worldArray[playerX][nextCellY]);
+                        }
                         break;
                     default:
                         break;
@@ -190,6 +208,19 @@ public class ServerThread extends Thread {
                     NetworkServer.getMembers().get(member.name).cellY = nextCellY;
                     NetworkServer.Broadcast(member.name + "||" + playerX + "||" + nextCellY);
                     playerY = NetworkServer.getMembers().get(member.name).cellY;
+                } else if (transfer) {
+                    //Unspawn player
+                    NetworkServer.Broadcast(member.name + "--");
+                    //Spawn player in new map
+                    MapTransfer trans = null;
+                    System.out.println("trans " + nextCellX + " " + playerY);
+                    if (dir == Direction.North || dir == Direction.South) {
+                        trans = NetworkServer.mapManager.transfers.get(nextCellX + "" + playerY);
+                    } else if (dir == Direction.East || dir == Direction.West) {
+                        trans = NetworkServer.mapManager.transfers.get(playerX + "" + nextCellY);
+                    }
+                    NetworkServer.Broadcast(member.name + "++" + trans.x + "++" + trans.y + "++" + member.avatar + "++" + trans.map);
+                    break;
                 } else {
                     break;
                 }
@@ -201,22 +232,35 @@ public class ServerThread extends Thread {
             }
         } else {
             boolean valid = false;
+            boolean transfer = false;
             if (null != dir) switch (dir) {
                 case North:
                     nextCellX = playerX - 1;
                     valid = validMove(worldArray[nextCellX][playerY]);
+                    if (!valid) {
+                            transfer = isTransfer(worldArray[nextCellX][playerY]);
+                    }
                     break;
                 case East:
                     nextCellY = playerY + 1;
                     valid = validMove(worldArray[playerX][nextCellY]);
+                    if (!valid) {
+                            transfer = isTransfer(worldArray[playerX][nextCellY]);
+                    }
                     break;
                 case South:
                     nextCellX = playerX + 1;
                     valid = validMove(worldArray[nextCellX][playerY]);
+                    if (!valid) {
+                            transfer = isTransfer(worldArray[nextCellX][playerY]);
+                    }
                     break;
                 case West:
                     nextCellY = playerY - 1;
                     valid = validMove(worldArray[playerX][nextCellY]);
+                    if (!valid) {
+                            transfer = isTransfer(worldArray[playerX][nextCellY]);
+                    }
                     break;
                 default:
                     break;
@@ -227,7 +271,21 @@ public class ServerThread extends Thread {
             } else if (valid && (dir == Direction.East || dir == Direction.West)) {
                 NetworkServer.getMembers().get(member.name).cellY = nextCellY;
                 NetworkServer.Broadcast(member.name + "||" + playerX + "||" + nextCellY);
-            }
+            } else if (transfer) {
+                    //Unspawn player
+                    NetworkServer.Broadcast(member.name + "--");
+                    //Spawn player in new map
+                    MapTransfer trans = null;
+                    System.out.println("trans " + nextCellX + " " + playerY);
+                    if (dir == Direction.North || dir == Direction.South) {
+                        System.out.println(NetworkServer.mapManager.transfers.size());
+                        trans = NetworkServer.mapManager.transfers.get(nextCellX + "" + playerY);
+                        System.out.println(trans);
+                    } else if (dir == Direction.East || dir == Direction.West) {
+                        trans = NetworkServer.mapManager.transfers.get(playerX + "" + nextCellY);
+                    }
+                    NetworkServer.Broadcast(member.name + "++" + trans.x + "++" + trans.y + "++" + member.avatar + "++" + trans.map);
+                }
         }
     }
 }

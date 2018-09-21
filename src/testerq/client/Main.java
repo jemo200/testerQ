@@ -19,7 +19,6 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import testerq.core.Member;
 import testerq.core.map.MapManager;
-import testerq.server.NetworkServer;
 /**
  *
  * @author emoj
@@ -111,14 +110,23 @@ public class Main {
         int x = Integer.parseInt(chunks[1]);
         int y = Integer.parseInt(chunks[2]);
         String avatar = chunks[3];
+        String worldZone = chunks[4];
         Member mem = new Member(name, x, y, avatar);
-        mem.worldZone = "area1zone1";
+        mem.worldZone = worldZone;
         if(name.equals(Main.name)) {
             currentMap = mapManager.zones.get(mem.worldZone).zone2DArray;
         }
         members.put(name, mem);
         clearMap();
         printMap();
+        
+    }
+    
+    private static void handleUnSpawn(String spawnData) {
+        String[] chunks = spawnData.split(Pattern.quote("--"));
+        String name = chunks[0];
+
+        members.remove(name);
         
     }
     
@@ -237,6 +245,8 @@ public class Main {
                         Main.handlePositionSync(input);
                     } else if (input.split(Pattern.quote("++")).length > 1) {
                         Main.handleSpawn(input);
+                    } else if (input.split(Pattern.quote("--")).length > 1) {
+                        Main.handleUnSpawn(input);
                     }
                 }
                 

@@ -61,7 +61,7 @@ public class ServerThread extends Thread {
             
             //send spawn broadcast
             System.out.println("broadcasting " + member.name + "++" + member.cellX + "++" + member.cellY + "++" + member.avatar + "++" + member.worldZone);
-            NetworkServer.Broadcast(member.name + "++" + member.cellX + "++" + member.cellY + "++" + member.avatar + "++" + member.worldZone);
+            NetworkServer.Broadcast(member.worldZone, member.name + "++" + member.cellX + "++" + member.cellY + "++" + member.avatar + "++" + member.worldZone);
             
             //spawn all other currently active members
 
@@ -203,15 +203,16 @@ public class ServerThread extends Thread {
                 }
                 if (valid && (dir == Direction.North || dir == Direction.South)) {
                     NetworkServer.getMembers().get(member.name).cellX = nextCellX;
-                    NetworkServer.Broadcast(member.name + "||" + nextCellX + "||" + playerY);
+                    NetworkServer.Broadcast(member.worldZone, member.name + "||" + nextCellX + "||" + playerY);
                     playerX = NetworkServer.getMembers().get(member.name).cellX;
                 } else if (valid && (dir == Direction.East || dir == Direction.West)) {
                     NetworkServer.getMembers().get(member.name).cellY = nextCellY;
-                    NetworkServer.Broadcast(member.name + "||" + playerX + "||" + nextCellY);
+                    NetworkServer.Broadcast(member.worldZone, member.name + "||" + playerX + "||" + nextCellY);
                     playerY = NetworkServer.getMembers().get(member.name).cellY;
                 } else if (transfer) {
                     //Unspawn player
-                    NetworkServer.Broadcast(member.name + "--");
+                    System.out.println("UNSPAWN " + member.name);
+                    NetworkServer.Broadcast(member.worldZone, member.name + "--");
                     //Spawn player in new map
                     MapTransfer trans = null;
                     System.out.println("trans " + nextCellX + " " + playerY);
@@ -224,7 +225,7 @@ public class ServerThread extends Thread {
                     member.cellY = trans.y;
                     member.worldZone = trans.map;
                     NetworkServer.getMembers().put(member.name, member);
-                    NetworkServer.Broadcast(member.name + "++" + trans.x + "++" + trans.y + "++" + member.avatar + "++" + trans.map);
+                    NetworkServer.Broadcast(member.worldZone, member.name + "++" + trans.x + "++" + trans.y + "++" + member.avatar + "++" + trans.map);
                     break;
                 } else {
                     break;
@@ -272,13 +273,13 @@ public class ServerThread extends Thread {
             }
             if (valid && (dir == Direction.North || dir == Direction.South)) {
                 NetworkServer.getMembers().get(member.name).cellX = nextCellX;
-                NetworkServer.Broadcast(member.name + "||" + nextCellX + "||" + playerY);
+                NetworkServer.Broadcast(member.worldZone, member.name + "||" + nextCellX + "||" + playerY);
             } else if (valid && (dir == Direction.East || dir == Direction.West)) {
                 NetworkServer.getMembers().get(member.name).cellY = nextCellY;
-                NetworkServer.Broadcast(member.name + "||" + playerX + "||" + nextCellY);
+                NetworkServer.Broadcast(member.worldZone, member.name + "||" + playerX + "||" + nextCellY);
             } else if (transfer) {
                 //Unspawn player
-                NetworkServer.Broadcast(member.name + "--");
+                NetworkServer.Broadcast(member.worldZone, member.name + "--");
                 //Spawn player in new map
                 MapTransfer trans = null;
                 System.out.println("trans " + nextCellX + " " + playerY);
@@ -293,7 +294,7 @@ public class ServerThread extends Thread {
                 member.cellY = trans.y;
                 member.worldZone = trans.map;
                 NetworkServer.getMembers().put(member.name, member);
-                NetworkServer.Broadcast(member.name + "++" + trans.x + "++" + trans.y + "++" + member.avatar + "++" + trans.map);
+                NetworkServer.Broadcast(member.worldZone, member.name + "++" + trans.x + "++" + trans.y + "++" + member.avatar + "++" + trans.map);
             }
         }
     }

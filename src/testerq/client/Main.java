@@ -106,40 +106,43 @@ public class Main {
     
     private static void handlePositionSync(String syncData) {
         String[] chunks = syncData.split(Pattern.quote("||"));
-        String name = chunks[0];
+        String nameIn = chunks[0];
         int cellX = Integer.parseInt(chunks[1]);
         int cellY = Integer.parseInt(chunks[2]);
-        members.get(name).cellX = cellX;
-        members.get(name).cellY = cellY;
+        members.get(nameIn).cellX = cellX;
+        members.get(nameIn).cellY = cellY;
         clearMap();
         printMap();
     }
 
     private static void handleSpawn(String spawnData) {
         String[] chunks = spawnData.split(Pattern.quote("++"));
-        String name = chunks[0];
+        String nameIn = chunks[0];
         int x = Integer.parseInt(chunks[1]);
         int y = Integer.parseInt(chunks[2]);
         String avatar = chunks[3];
         String worldZone = chunks[4];
-        Member mem = new Member(name, x, y, avatar);
+        Member mem = new Member(nameIn, x, y, avatar);
         mem.worldZone = worldZone;
-        if(name.equals(Main.name)) {
+        if(nameIn.equals(Main.name)) {
             currentMap = mapManager.zones.get(mem.worldZone).zone2DArray;
         }
-        members.put(name, mem);
+        members.put(nameIn, mem);
         clearMap();
         printMap();
         
     }
     
     private static void handleUnSpawn(String spawnData) {
+        
         String[] chunks = spawnData.split(Pattern.quote("--"));
-        String name = chunks[0];
-
-        members.remove(name);
-        clearMap();
-        printMap();
+        String nameIn = chunks[0];
+        members.remove(nameIn);
+        
+        if (!nameIn.equals(name)) {
+            clearMap();
+            printMap();
+        }
         
     }
     
@@ -196,7 +199,9 @@ public class Main {
             }
         }
         for (Map.Entry<String, Member> entry : members.entrySet()) {
-            currentMap[entry.getValue().cellX][entry.getValue().cellY] = entry.getValue().avatar;
+            if (entry.getValue().worldZone.equals(members.get(name).worldZone)) {
+                currentMap[entry.getValue().cellX][entry.getValue().cellY] = entry.getValue().avatar;
+            }
         }
     }
     
@@ -258,7 +263,8 @@ public class Main {
                         Main.handlePositionSync(input);
                     } else if (input.split(Pattern.quote("++")).length > 1) {
                         Main.handleSpawn(input);
-                    } else if (input.split(Pattern.quote("--")).length > 1) {
+                    } else if (input.split(Pattern.quote("--")).length >= 1) {
+                        System.out.println("MINUSMINUS");
                         Main.handleUnSpawn(input);
                     }
                 }

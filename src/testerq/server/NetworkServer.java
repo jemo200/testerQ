@@ -6,9 +6,13 @@
 package testerq.server;
 
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import testerq.core.Member;
 import testerq.core.map.MapManager;
 
@@ -21,7 +25,7 @@ public class NetworkServer {
     
     private static HashMap<String, Member> members = new HashMap<String, Member>();
 
-    private static HashMap<String, PrintWriter> writers = new HashMap<String, PrintWriter>();
+    private static HashMap<String, ObjectOutputStream> writers = new HashMap<String, ObjectOutputStream>();
     
     public static MapManager mapManager = new MapManager();
     
@@ -65,7 +69,7 @@ public class NetworkServer {
         }
     }
     
-    public static boolean AddListener(String name, PrintWriter listener) {
+    public static boolean AddListener(String name, ObjectOutputStream listener) {
         synchronized (writers) {
             if (writers.get(name) == null) {
                 writers.put(name, listener);
@@ -90,16 +94,22 @@ public class NetworkServer {
     }
     
     public static void Broadcast(String message) {
-        for (Map.Entry<String, PrintWriter> entry : writers.entrySet()) {
-            entry.getValue().println(message);
+        try {
+            for (Map.Entry<String, ObjectOutputStream> entry : writers.entrySet()) {
+                entry.getValue().writeObject(message);
+            }
+        } catch (IOException ex) {
         }
     }
     
     public static void Broadcast(String worldZone, String message) {
-        for (Map.Entry<String, Member> entry : members.entrySet()) {
-            if(entry.getValue().worldZone.compareTo(worldZone) == 0) {
-                writers.get(entry.getValue().name).println(message);
+        try {
+            for (Map.Entry<String, Member> entry : members.entrySet()) {
+                if(entry.getValue().worldZone.compareTo(worldZone) == 0) {
+                    writers.get(entry.getValue().name).writeObject(message);
+                }
             }
+        } catch (IOException ex) {
         }
     }
     

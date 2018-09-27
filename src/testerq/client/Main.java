@@ -5,12 +5,11 @@
  */
 package testerq.client;
 
-import java.io.BufferedReader;
 import java.io.Console;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.util.HashMap;
@@ -19,6 +18,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 import testerq.core.Member;
+import testerq.core.ZoneMessage;
 import testerq.core.map.MapManager;
 /**
  *
@@ -29,7 +29,8 @@ public class Main {
     static int viewWidth = 40;
     static int viewHeight = viewWidth / 2;
     static Console console = System.console();
-    static PrintWriter mOut;
+    //static PrintWriter mOut;
+    static ObjectOutputStream mOOut;
     static boolean signedIn = false;
     
     private static HashMap<String, Member> members = new HashMap<String, Member>();
@@ -42,6 +43,7 @@ public class Main {
     public static void main(String[] args) {
         String hostName = args[0];
         int portNumber = Integer.parseInt(args[1]);
+        boolean running = true;
         
         if (console == null) {
             System.out.println("Console is not supported");
@@ -59,23 +61,21 @@ public class Main {
 
         try {
             Socket clientSocket = new Socket(hostName, portNumber);
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-            mOut = out;
-            BufferedReader in = new BufferedReader(
-                new InputStreamReader(clientSocket.getInputStream()));
-            
-            new InsHandler(in).start();
-            
+            //PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+            ObjectOutputStream oOut = new ObjectOutputStream(clientSocket.getOutputStream());
+            //mOut = out;
+            mOOut = oOut;
+            //BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            ObjectInputStream oIn = new ObjectInputStream(clientSocket.getInputStream());
+            new InsHandler(oIn).start();
             String fromUser = "";
 
-            while (true) {
+            while (running) {
                 if (signedIn) {
                     Thread.sleep(300);
                     fromUser = console.readLine("action: ");
-                    if (fromUser != null) {
-                        if (fromUser.split(" ")[0].compareTo("config") != 0) {
-                            out.println("command::" + fromUser);
-                        } else {
+                    if (!fromUser.equals("exit")) {
+                        if (fromUser.split(" ")[0].compareTo("config") == 0) {
                             if (fromUser.split(" ")[1].compareTo("vwidth") == 0) {
                                 viewWidth = Integer.parseInt(fromUser.split(" ")[2]);
                                 clearMap();
@@ -85,13 +85,21 @@ public class Main {
                                 clearMap();
                                 printMap();
                             }
+                        }else if (fromUser.substring(0, 3).equals("say")) {
+                            ZoneMessage zMsg = new ZoneMessage();
+                            zMsg.msg = fromUser.substring(4, fromUser.length());
+                            oOut.writeObject(zMsg);
+                        } else {
+                            //out.println("command::" + fromUser);
+                            oOut.writeObject("command::" + fromUser);
                         }
-                        //clearMap();
-                        //printMap();
                     } else {
-                        out.close();
-                        in.close();
+                        goodBye();
+                        //out.close();
+                        oOut.close();
+                        oIn.close();
                         clientSocket.close();
+                        running = false;
                     }
                 } else {
                     Thread.sleep(500);
@@ -100,6 +108,7 @@ public class Main {
         } catch (IOException e) {
             System.out.println(e);
         } catch (InterruptedException ex) {
+            
         }
         
     }
@@ -147,7 +156,7 @@ public class Main {
     }
     
     private static void printMap() {
-        //clearConsole();
+        clearConsole();
         //PRINT MAP
         System.out.println(System.getProperty("line.separator"));
         Member player = members.get(name);
@@ -208,37 +217,59 @@ public class Main {
     public static void getUsername() {
         String fromUser = Main.console.readLine("Username: ");
         Main.name = fromUser;
-        Main.mOut.println(fromUser);
-    }
-    
-    public static void getAvatar() {
-        String fromUser = Main.console.readLine("Choose Avatar 1)\u263A 2)\u263B 3)\u2665 4)\u2666 5)\u2663 6)\u2660");
-        if (fromUser.compareTo("1") == 0) {
-            Main.mOut.println("\u263A");
-        } else if (fromUser.compareTo("2") == 0) {
-            Main.mOut.println("\u263B");
-        } else if (fromUser.compareTo("3") == 0) {
-            Main.mOut.println("\u2665");
-        } else if (fromUser.compareTo("4") == 0) {
-            Main.mOut.println("\u2666");
-        } else if (fromUser.compareTo("5") == 0) {
-            Main.mOut.println("\u2663");
-        } else if (fromUser.compareTo("6") == 0) {
-            Main.mOut.println("\u2660");
+        try {
+            //Main.mOut.println(fromUser);
+            Main.mOOut.writeObject(fromUser);
+        } catch (IOException ex) {
         }
     }
     
+    public static void getAvatar() {
+        try {
+            String fromUser = Main.console.readLine("Choose Avatar 1)\u263A 2)\u263B 3)\u2665 4)\u2666 5)\u2663 6)\u2660");
+            if (fromUser.compareTo("1") == 0) {
+                //Main.mOut.println("\u263A");
+                Main.mOOut.writeObject("\u263A");
+            } else if (fromUser.compareTo("2") == 0) {
+                //Main.mOut.println("\u263B");
+                Main.mOOut.writeObject("\u263B");
+            } else if (fromUser.compareTo("3") == 0) {
+                //Main.mOut.println("\u2665");
+                Main.mOOut.writeObject("\u2665");
+            } else if (fromUser.compareTo("4") == 0) {
+                //Main.mOut.println("\u2666");
+                Main.mOOut.writeObject("\u2666");
+            } else if (fromUser.compareTo("5") == 0) {
+                //Main.mOut.println("\u2663");
+                Main.mOOut.writeObject("\u2663");
+            } else if (fromUser.compareTo("6") == 0) {
+                //Main.mOut.println("\u2660");
+                Main.mOOut.writeObject("\u2660");
+            }
+        } catch (IOException ex) {
+        }
+    }
+    
+    private static void goodBye() {
+        System.out.println("|---\\ \\   / |----");
+        System.out.println("|   |  \\ /  |    ");
+        System.out.println("|  /    |   |____");
+        System.out.println("|/--    |   |    ");
+        System.out.println("|   |   |   |    ");
+        System.out.println("|__/    |   |____");
+    }
+    
     private static class InsHandler extends Thread{
-        private BufferedReader ins;
+        private ObjectInputStream ins;
         
-        InsHandler(BufferedReader ins) {
+        InsHandler(ObjectInputStream ins) {
             this.ins = ins;
         }
         String input;
         public void run() {
             
             try {
-                while((input = ins.readLine()) != null) {
+                while((input = (String)ins.readObject()) != null) {
                     if (input.compareTo("Username:") == 0) {
                         Main.getUsername();
                     } else if (input.compareTo("Logged In Successfully") == 0) {
@@ -246,7 +277,7 @@ public class Main {
                     }
                 }
                 
-                while((input = ins.readLine()) != null) {
+                while((input = (String)ins.readObject()) != null) {
                     if (input.compareTo("Avatar") == 0) {
                         Main.getAvatar();
                     } else if (input.compareTo("Avatar Chosen") == 0) {
@@ -255,23 +286,26 @@ public class Main {
                     }
                 }
                 
-                while ((input = ins.readLine()) != null) {
-                    events.push(input);
+                while ((input = (String)ins.readObject()) != null) {
                     if (input.equals("Bye.")) {
                         break;
-                    } else if (input.split(Pattern.quote("||")).length > 1) {
+                    } else if (input.substring(0, 4).equals("+_)(")) {
+                        events.push(input.substring(5, input.length()));
+                        clearMap();
+                        printMap();
+                    }else if (input.split(Pattern.quote("||")).length > 1) {
                         Main.handlePositionSync(input);
                     } else if (input.split(Pattern.quote("++")).length > 1) {
                         Main.handleSpawn(input);
                     } else if (input.split(Pattern.quote("--")).length >= 1) {
-                        System.out.println("MINUSMINUS");
                         Main.handleUnSpawn(input);
                     }
                 }
                 
             } catch (IOException ex) {
+            } catch (ClassNotFoundException ex) {
             }
         }
     }
-    
+     
 }

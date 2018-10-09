@@ -8,11 +8,8 @@ package testerq.server;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import testerq.core.Member;
 import testerq.core.NInanimate;
 import testerq.core.NPEntity;

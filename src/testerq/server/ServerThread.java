@@ -1,6 +1,8 @@
 
 package testerq.server;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -10,6 +12,8 @@ import java.util.regex.Pattern;
 import testerq.core.Direction;
 import testerq.core.MapTransfer;
 import testerq.core.Member;
+import testerq.core.MemberAccount;
+import testerq.core.MemberSave;
 import testerq.core.ZoneMessage;
 
 public class ServerThread extends Thread {
@@ -24,6 +28,7 @@ public class ServerThread extends Thread {
     String inpStr = "";
     ObjectInputStream oIn = null;
     ObjectOutputStream oOut = null;
+
     Socket s = null;
 
     public ServerThread(Socket s) {
@@ -34,30 +39,75 @@ public class ServerThread extends Thread {
         try {
             oIn = new ObjectInputStream(s.getInputStream());
             oOut = new ObjectOutputStream(s.getOutputStream());
-
-            String name = null;
-            String avatar = null;
+            
+            boolean isNew = true;
             while (true) {
-                oOut.writeObject("Username:");
-                name = (String)oIn.readObject();
-                if (name == null || (NetworkServer.getMembers().get(name) != null)) {
+                oOut.writeObject("Welcome");
+                String loginOrNew = (String) oIn.readObject();
+                if(loginOrNew.compareTo("new") == 0) {
+                    while (true) {
+                        oOut.writeObject("Username:");
+                        String name = (String)oIn.readObject();
+                        if (name == null || (NetworkServer.getMembers().get(name) != null)) {
+                            continue;
+                        }
+                        oOut.writeObject("Password:");
+                        String pwIn = (String)oIn.readObject();
+                        if (pwIn == null) {
+                            continue;
+                        }
+                        oOut.writeObject("Avatar");
+                        String avatar = (String)oIn.readObject();
+                        if (avatar == null) {
+                            return;
+                        }
+                        MemberAccount memAcc = new MemberAccount();
+                        memAcc.userName = name;
+                        memAcc.userPw = pwIn;
+                        FileOutputStream fOut = new FileOutputStream(name + "Account");
+                        ObjectOutputStream credentialOut = new ObjectOutputStream(fOut);
+                        credentialOut.writeObject(memAcc);
+                        credentialOut.close();
+
+                        member = new Member(name, cellX, cellY, avatar, "area1zone1");
+                        NetworkServer.AddMember(member);
+                        NetworkServer.AddListener(member.name, oOut);
+                        oOut.writeObject("Account Created Successfully");
+                        break;
+                    }
+                } else if(loginOrNew.compareTo("login") == 0) {
+                    while (true) {
+                        oOut.writeObject("Username:");
+                        String name = (String)oIn.readObject();
+                        if (name == null || (NetworkServer.getMembers().get(name) != null)) {
+                            continue;
+                        }
+                        oOut.writeObject("Password:");
+                        String pwIn = (String)oIn.readObject();
+                        if (pwIn == null) {
+                            continue;
+                        }
+                        FileInputStream fIn = new FileInputStream(name + "Account");
+                        ObjectInputStream credentialIn = new ObjectInputStream(fIn);
+                        MemberAccount memAcc = (MemberAccount)credentialIn.readObject();
+                        if(memAcc.userPw.compareTo(pwIn) == 0) {
+                            FileInputStream lIn = new FileInputStream(name);
+                            ObjectInputStream persistenceIn = new ObjectInputStream(lIn);
+                            MemberSave memSave = (MemberSave)persistenceIn.readObject();
+                            member = new Member(name, memSave.position.x, memSave.position.y, memSave.avatar, memSave.zone);
+                            NetworkServer.AddMember(member);
+                            NetworkServer.AddListener(member.name, oOut);
+                            persistenceIn.close();
+                            oOut.writeObject("Logged In Successfully");
+                        }
+                        credentialIn.close();
+                        break;
+                    }
+                } else {
                     continue;
                 }
                 break;
             }
-            oOut.writeObject("Logged In Successfully");
-            while (true) {
-                oOut.writeObject("Avatar");
-                avatar = (String)oIn.readObject();
-                if (avatar == null) {
-                    return;
-                }
-                oOut.writeObject("Avatar Chosen");
-                member = new Member(name, cellX, cellY, avatar, "area1zone1");
-                NetworkServer.AddMember(member);
-                NetworkServer.AddListener(member.name, oOut);
-                break;
-            } 
             
             //send spawn broadcast
             NetworkServer.Broadcast(member.getWorldZone(), member.name + "++" + member.getPositionX() + "++" + member.getPositionY() + "++" + member.getSprite() + "++" + member.getWorldZone());
@@ -84,15 +134,26 @@ public class ServerThread extends Thread {
                 }       
             }
         } catch (IOException e) {
-
             input = this.getName();
             System.out.println("IO Error/ Client " + input + " terminated abruptly");
         } catch (NullPointerException e) {
+            e.printStackTrace();
             input = this.getName();
             System.out.println("Client " + input + " Closed");
         } catch (ClassNotFoundException ex) {
+            System.out.println(ex);
+        } catch (Exception e) {
+            System.out.println(e);
         } finally {
             try {
+                FileOutputStream lOut = new FileOutputStream(member.name);
+                ObjectOutputStream persistenceOut = new ObjectOutputStream(lOut);
+                MemberSave memSave = new MemberSave();
+                memSave.avatar = member.getSprite();
+                memSave.position = member.getPosition();
+                memSave.zone = member.getWorldZone();
+                persistenceOut.writeObject(memSave);
+                persistenceOut.close();
                 System.out.println("Connection Closing..");
                 if (oIn != null) {
                     oIn.close();

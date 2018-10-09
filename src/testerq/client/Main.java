@@ -213,12 +213,34 @@ public class Main {
         }
     }
     
+    public static void welcome() {
+        try {
+            String fromUser = Main.console.readLine("Welcome! 1)Login 2)New User");
+            if (fromUser.compareTo("1") == 0) {
+                Main.mOOut.writeObject("login");
+            } else if (fromUser.compareTo("2") == 0) {
+                Main.mOOut.writeObject("new");
+            } else {
+
+            }
+        } catch (IOException ex) {
+        }
+    }
+    
     public static void getUsername() {
         String fromUser = Main.console.readLine("Username: ");
         Main.name = fromUser;
         try {
             //Main.mOut.println(fromUser);
             Main.mOOut.writeObject(fromUser);
+        } catch (IOException ex) {
+        }
+    }
+    
+    public static void getUserPw() {
+        char[] fromUser = Main.console.readPassword("Password: ");
+        try {
+            Main.mOOut.writeObject(new String(fromUser));
         } catch (IOException ex) {
         }
     }
@@ -269,21 +291,22 @@ public class Main {
             
             try {
                 while((input = (String)ins.readObject()) != null) {
-                    if (input.compareTo("Username:") == 0) {
+                    if (input.compareTo("Welcome") == 0) {
+                        Main.welcome();
+                    } else if (input.compareTo("Username:") == 0) {
                         Main.getUsername();
+                    } else if (input.compareTo("Password:") == 0) {
+                        Main.getUserPw();
+                    } else if (input.compareTo("Avatar") == 0) {
+                        Main.getAvatar();
                     } else if (input.compareTo("Logged In Successfully") == 0) {
                         break;
-                    }
-                }
-                
-                while((input = (String)ins.readObject()) != null) {
-                    if (input.compareTo("Avatar") == 0) {
-                        Main.getAvatar();
-                    } else if (input.compareTo("Avatar Chosen") == 0) {
-                        Main.signedIn = true;
+                    } else if (input.compareTo("Account Created Successfully") == 0) {
                         break;
                     }
                 }
+                System.out.println("gr");
+                Main.signedIn = true;
                 
                 while ((input = (String)ins.readObject()) != null) {
                     if (input.equals("Bye.")) {

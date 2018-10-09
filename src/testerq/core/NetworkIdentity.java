@@ -19,8 +19,22 @@ public class NetworkIdentity implements Serializable {
     public NetworkInstanceId getM_NetId() {
         return m_NetId;
     }
+    
+    public static int s_NextNetworkId = 1;
+    public static NetworkInstanceId GetNextNetworkId() {
+        int newId = s_NextNetworkId;
+        s_NextNetworkId += 1;
+        return new NetworkInstanceId(newId);
+    }
 
+    //only used during spawning on clients to set identity
     public void setM_NetId(NetworkInstanceId m_NetId) {
         this.m_NetId = m_NetId;
+    }
+    
+    public void OnStartServer() {
+        if(m_NetId.getValue() == 0) {
+            m_NetId = GetNextNetworkId();
+        }
     }
 }

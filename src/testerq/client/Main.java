@@ -85,7 +85,7 @@ public class Main {
                                 clearMap();
                                 printMap();
                             }
-                        }else if (fromUser.substring(0, 3).equals("say")) {
+                        }else if (fromUser.length() > 4 && fromUser.substring(0, 3).equals("say")) {
                             ZoneMessage zMsg = new ZoneMessage();
                             zMsg.msg = fromUser.substring(4, fromUser.length());
                             oOut.writeObject(zMsg);
@@ -118,8 +118,8 @@ public class Main {
         String nameIn = chunks[0];
         int cellX = Integer.parseInt(chunks[1]);
         int cellY = Integer.parseInt(chunks[2]);
-        members.get(nameIn).cellX = cellX;
-        members.get(nameIn).cellY = cellY;
+        members.get(nameIn).setPositionX(cellX);
+        members.get(nameIn).setPositionY(cellY);
         clearMap();
         printMap();
     }
@@ -131,10 +131,9 @@ public class Main {
         int y = Integer.parseInt(chunks[2]);
         String avatar = chunks[3];
         String worldZone = chunks[4];
-        Member mem = new Member(nameIn, x, y, avatar);
-        mem.worldZone = worldZone;
+        Member mem = new Member(nameIn, x, y, avatar, worldZone);
         if(nameIn.equals(Main.name)) {
-            currentMap = mapManager.zones.get(mem.worldZone).zone2DArray;
+            currentMap = mapManager.zones.get(mem.getWorldZone()).zone2DArray;
         }
         members.put(nameIn, mem);
         clearMap();
@@ -159,10 +158,10 @@ public class Main {
         clearConsole();
         //PRINT MAP
         System.out.println(System.getProperty("line.separator"));
-        Member player = members.get(name);
-        for(int i=player.cellX - (viewHeight / 2); i<(player.cellX - (viewHeight / 2)) + viewHeight; i++) {
+        Member member = members.get(name);
+        for(int i=member.getPositionX() - (viewHeight / 2); i<(member.getPositionX() - (viewHeight / 2)) + viewHeight; i++) {
             String line = "";
-            for(int j=player.cellY - (viewWidth / 2); j< (player.cellY - (viewWidth / 2)) + viewWidth; j++) {
+            for(int j=member.getPositionY() - (viewWidth / 2); j< (member.getPositionY() - (viewWidth / 2)) + viewWidth; j++) {
                 if (i < 0 || j < 0 || i >= currentMap.length || j >= currentMap[0].length) {
                     line += "@";
                 } else {
@@ -208,8 +207,8 @@ public class Main {
             }
         }
         for (Map.Entry<String, Member> entry : members.entrySet()) {
-            if (entry.getValue().worldZone.equals(members.get(name).worldZone)) {
-                currentMap[entry.getValue().cellX][entry.getValue().cellY] = entry.getValue().avatar;
+            if (entry.getValue().getWorldZone().equals(members.get(name).getWorldZone())) {
+                currentMap[entry.getValue().getPositionX()][entry.getValue().getPositionY()] = entry.getValue().getSprite();
             }
         }
     }
@@ -289,7 +288,7 @@ public class Main {
                 while ((input = (String)ins.readObject()) != null) {
                     if (input.equals("Bye.")) {
                         break;
-                    } else if (input.substring(0, 4).equals("+_)(")) {
+                    } else if (input.length() > 3 && input.substring(0, 4).equals("+_)(")) {
                         events.push(input.substring(5, input.length()));
                         clearMap();
                         printMap();

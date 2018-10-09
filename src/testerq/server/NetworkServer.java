@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import testerq.core.Member;
+import testerq.core.NInanimate;
+import testerq.core.NPEntity;
 import testerq.core.map.MapManager;
 
 /**
@@ -24,6 +26,8 @@ public class NetworkServer {
     private static NetworkServer s_Instance;
     
     private static HashMap<String, Member> members = new HashMap<String, Member>();
+    public static HashMap<String, NPEntity> entities = new HashMap<String, NPEntity>();
+    public static HashMap<String, NInanimate> inanimates = new HashMap<String, NInanimate>();
 
     private static HashMap<String, ObjectOutputStream> writers = new HashMap<String, ObjectOutputStream>();
     
@@ -105,7 +109,7 @@ public class NetworkServer {
     public static void Broadcast(String worldZone, String message) {
         try {
             for (Map.Entry<String, Member> entry : members.entrySet()) {
-                if(entry.getValue().worldZone.compareTo(worldZone) == 0) {
+                if(entry.getValue().getWorldZone().compareTo(worldZone) == 0) {
                     writers.get(entry.getValue().name).writeObject(message);
                 }
             }

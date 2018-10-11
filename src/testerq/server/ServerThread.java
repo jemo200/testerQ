@@ -114,14 +114,13 @@ public class ServerThread extends Thread {
             
             //spawn all other currently active members
             for (Map.Entry<String, Member> entry : NetworkServer.getMembers().entrySet()) {
-                if(!entry.getKey().equals(member.name)) {
+                if(!entry.getKey().equals(member.name) && entry.getValue().getWorldZone().equals(member.getWorldZone())) {
                     oOut.writeObject(entry.getValue().name + "++" + entry.getValue().getPositionX() + "++" + entry.getValue().getPositionY() + "++" + entry.getValue().getSprite() + "++" + entry.getValue().getWorldZone());
                 }
             }
 
             while (true) {
                 input = oIn.readObject();
-                System.out.println(input.getClass());
                 if(input.getClass().toString().contains("java.lang.String")) {
                     inpStr = (String)input;
                     if (inpStr.split(Pattern.quote("::")).length > 1) {
@@ -146,6 +145,9 @@ public class ServerThread extends Thread {
             System.out.println(e);
         } finally {
             try {
+                //unspawn member
+                NetworkServer.Broadcast(member.name + "--");
+                //save current member state
                 FileOutputStream lOut = new FileOutputStream(member.name);
                 ObjectOutputStream persistenceOut = new ObjectOutputStream(lOut);
                 MemberSave memSave = new MemberSave();
@@ -291,7 +293,7 @@ public class ServerThread extends Thread {
             return true;
         } else if (transfer) {
             //Unspawn player
-            NetworkServer.Broadcast(member.getWorldZone(), member.name + "--");
+            NetworkServer.Broadcast(member.name + "--");
             //Spawn player in new map
             MapTransfer trans = null;
             if (dir == Direction.North || dir == Direction.South) {
@@ -302,15 +304,26 @@ public class ServerThread extends Thread {
             member.setPositionX(trans.x);
             member.setPositionY(trans.y);
             member.setWorldZone(trans.map);
+            //overwrite member with new zone/position
             NetworkServer.getMembers().put(member.name, member);
+            //send spawn to all members in zone
             NetworkServer.Broadcast(member.getWorldZone(), member.name + "++" + trans.x + "++" + trans.y + "++" + member.getSprite() + "++" + trans.map);
+            //spawn all other currently active members
+            try {
+                for (Map.Entry<String, Member> entry : NetworkServer.getMembers().entrySet()) {
+                    if(!entry.getKey().equals(member.name) && entry.getValue().getWorldZone().equals(member.getWorldZone())) {
+                        oOut.writeObject(entry.getValue().name + "++" + entry.getValue().getPositionX() + "++" + entry.getValue().getPositionY() + "++" + entry.getValue().getSprite() + "++" + entry.getValue().getWorldZone());
+                    }
+                }
+            } catch (IOException e) {
+                
+            }
             return false;
         }
         return false;
     }
     
     private void handleZoneMessage(ZoneMessage zMsg) {
-        System.out.println(zMsg.msg);
         NetworkServer.Broadcast(member.getWorldZone(), "+_)( " + "[" + member.name + "]: " +zMsg.msg);
     }
 }

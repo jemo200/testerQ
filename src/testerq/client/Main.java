@@ -85,17 +85,34 @@ public class Main {
                                 clearMap();
                                 printMap();
                             }
-                        }else if (fromUser.length() > 4 && fromUser.substring(0, 3).equals("say")) {
+                        } else if (fromUser.length() > 4 && fromUser.substring(0, 3).equals("say")) {
                             ZoneMessage zMsg = new ZoneMessage();
                             zMsg.msg = fromUser.substring(4, fromUser.length());
                             oOut.writeObject(zMsg);
+                        } else if (fromUser.split(" ")[0].compareTo("inspect") == 0){
+                            String[] actions = fromUser.split(" ");
+                            if (actions[1].compareTo("north") == 0 || actions[1].compareTo("n") == 0 || actions[1].compareTo("up") == 0) {
+                                //x - 1
+                                String cellSprite = currentMap[members.get(name).getPositionX() - 1][members.get(name).getPositionY()];
+                                handleInspect(cellSprite);
+                            } else if (actions[1].compareTo("south") == 0 || actions[1].compareTo("s") == 0 ||actions[1].compareTo("down") == 0) {
+                                //x + 1
+                                String cellSprite = currentMap[members.get(name).getPositionX() + 1][members.get(name).getPositionY()];
+                                handleInspect(cellSprite);
+                            } else if (actions[1].compareTo("west") == 0 || actions[1].compareTo("w") == 0 || actions[1].compareTo("left") == 0) {
+                                //y - 1
+                                String cellSprite = currentMap[members.get(name).getPositionX()][members.get(name).getPositionY() - 1];
+                                handleInspect(cellSprite);
+                            } else if (actions[1].compareTo("east") == 0 || actions[1].compareTo("e") == 0 || actions[1].compareTo("right") == 0) {
+                                //y + 1
+                                String cellSprite = currentMap[members.get(name).getPositionX() - 1][members.get(name).getPositionY() + 1];
+                                handleInspect(cellSprite);
+                            }
                         } else {
-                            //out.println("command::" + fromUser);
                             oOut.writeObject("command::" + fromUser);
                         }
                     } else {
                         goodBye();
-                        //out.close();
                         oOut.close();
                         oIn.close();
                         clientSocket.close();
@@ -146,7 +163,9 @@ public class Main {
         String[] chunks = spawnData.split(Pattern.quote("--"));
         String nameIn = chunks[0];
         members.remove(nameIn);
-        
+        if (nameIn.equals(name)) {
+            members.clear();
+        }
         if (!nameIn.equals(name)) {
             clearMap();
             printMap();
@@ -278,6 +297,18 @@ public class Main {
         System.out.println("|/--    |   |    ");
         System.out.println("|   |   |   |    ");
         System.out.println("|__/    |   |____");
+    }
+    
+    private static void handleInspect(String sprite) {
+        if (sprite.equals("#")) {
+            events.push("A healthy tree.");
+        } else if (sprite.equals("^")) {
+            events.push("A minable rock formation.");
+        } else if (sprite.equals("|")) {
+            events.push("A wall.");
+        }
+        clearMap();
+        printMap();
     }
     
     private static class InsHandler extends Thread{

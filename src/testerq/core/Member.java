@@ -1,11 +1,13 @@
 package testerq.core;
 
 import java.awt.Point;
+import java.util.HashMap;
 
 
 public class Member extends GameObject{
     
     public String name;
+    public HashMap<String,Item> inventory = new HashMap<>();
     
     public Member(String name, int x, int y, String sprite) {
         super();

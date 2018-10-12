@@ -108,6 +108,25 @@ public class Main {
                                 String cellSprite = currentMap[members.get(name).getPositionX() - 1][members.get(name).getPositionY() + 1];
                                 handleInspect(cellSprite);
                             }
+                        } else if (fromUser.split(" ")[0].compareTo("interact") == 0){
+                            String[] actions = fromUser.split(" ");
+                            if (actions[1].compareTo("north") == 0 || actions[1].compareTo("n") == 0 || actions[1].compareTo("up") == 0) {
+                                //x - 1
+                                String cellSprite = currentMap[members.get(name).getPositionX() - 1][members.get(name).getPositionY()];
+                                handleInteract(cellSprite);
+                            } else if (actions[1].compareTo("south") == 0 || actions[1].compareTo("s") == 0 ||actions[1].compareTo("down") == 0) {
+                                //x + 1
+                                String cellSprite = currentMap[members.get(name).getPositionX() + 1][members.get(name).getPositionY()];
+                                handleInteract(cellSprite);
+                            } else if (actions[1].compareTo("west") == 0 || actions[1].compareTo("w") == 0 || actions[1].compareTo("left") == 0) {
+                                //y - 1
+                                String cellSprite = currentMap[members.get(name).getPositionX()][members.get(name).getPositionY() - 1];
+                                handleInteract(cellSprite);
+                            } else if (actions[1].compareTo("east") == 0 || actions[1].compareTo("e") == 0 || actions[1].compareTo("right") == 0) {
+                                //y + 1
+                                String cellSprite = currentMap[members.get(name).getPositionX() - 1][members.get(name).getPositionY() + 1];
+                                handleInteract(cellSprite);
+                            }
                         } else {
                             oOut.writeObject("command::" + fromUser);
                         }
@@ -306,6 +325,24 @@ public class Main {
             events.push("A minable rock formation.");
         } else if (sprite.equals("|")) {
             events.push("A wall.");
+        } else if (sprite.equals("$")) {
+            events.push("A great king.");
+        } else if (sprite.equals("R")) {
+            events.push("A citizen.");
+        } else if (sprite.equals("M")) {
+            events.push("Royal Smelter Macari");
+        }
+        clearMap();
+        printMap();
+    }
+    
+    private static void handleInteract(String sprite) {
+        if (sprite.equals("$")) {
+            events.push("(King Leroy) Greetings. Our lands are in need of a hero like yourself! Find Macari and help him for a reward.");
+        } else if (sprite.equals("R")) {
+            events.push("(citizen) Good day to you.");
+        } else if (sprite.equals("M")) {
+            events.push("(Macari) Hero! I an in need of wood to fuel my smelting operation. Could you bring me 20 wood logs?");
         }
         clearMap();
         printMap();

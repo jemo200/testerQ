@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.util.Map;
 import java.util.regex.Pattern;
 import testerq.core.Direction;
+import testerq.core.Item;
 import testerq.core.MapTransfer;
 import testerq.core.Member;
 import testerq.core.MemberAccount;
@@ -214,6 +215,31 @@ public class ServerThread extends Thread {
                         handleMove(worldArray, Direction.East, playerX, playerY, numMoves);
                     } else {
                         handleMove(worldArray, Direction.East, playerX, playerY, 1);     
+                    }
+                }
+            } else if (actions[0].compareTo("chop") == 0) {
+                String[][] worldArray = NetworkServer.mapManager.zones.get(member.getWorldZone()).zone2DArray;
+                String cellSprite = null;
+                if (actions[1].compareTo("north") == 0 || actions[1].compareTo("n") == 0 || actions[1].compareTo("up") == 0) {
+                    cellSprite = worldArray[playerX - 1][playerY];
+                } else if (actions[1].compareTo("south") == 0 || actions[1].compareTo("s") == 0 ||actions[1].compareTo("down") == 0) {
+                    cellSprite = worldArray[playerX + 1][playerY];
+                } else if (actions[1].compareTo("west") == 0 || actions[1].compareTo("w") == 0 || actions[1].compareTo("left") == 0) {
+                    cellSprite = worldArray[playerX][playerY - 1];
+                } else if (actions[1].compareTo("east") == 0 || actions[1].compareTo("e") == 0 || actions[1].compareTo("right") == 0) {
+                    cellSprite = worldArray[playerX][playerY + 1];
+                }
+                if (cellSprite != null) {
+                    if (cellSprite.equals("#")) {
+                        if(member.inventory.get("treelogs") != null) {
+                            member.inventory.get("treelogs").quantity += 3;
+                        } else {
+                            Item logs = new Item();
+                            logs.itemId = 00001;
+                            logs.name = "wood logs";
+                            logs.quantity = 3;
+                            member.inventory.put("treelogs", logs);
+                        }
                     }
                 }
             }

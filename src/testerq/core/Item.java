@@ -1,6 +1,8 @@
 package testerq.core;
 
-public class Item {
+import java.io.Serializable;
+
+public class Item implements Serializable{
     public String name;
     public int itemId;
     public int quantity;

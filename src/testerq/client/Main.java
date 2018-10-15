@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
+import testerq.core.Item;
 import testerq.core.Member;
 import testerq.core.ZoneMessage;
 import testerq.core.map.MapManager;
@@ -355,6 +356,7 @@ public class Main {
             this.ins = ins;
         }
         String input;
+        Object objIn;
         public void run() {
             
             try {
@@ -373,22 +375,27 @@ public class Main {
                         break;
                     }
                 }
-                System.out.println("gr");
                 Main.signedIn = true;
                 
-                while ((input = (String)ins.readObject()) != null) {
-                    if (input.equals("Bye.")) {
-                        break;
-                    } else if (input.length() > 3 && input.substring(0, 4).equals("+_)(")) {
-                        events.push(input.substring(5, input.length()));
-                        clearMap();
-                        printMap();
-                    }else if (input.split(Pattern.quote("||")).length > 1) {
-                        Main.handlePositionSync(input);
-                    } else if (input.split(Pattern.quote("++")).length > 1) {
-                        Main.handleSpawn(input);
-                    } else if (input.split(Pattern.quote("--")).length >= 1) {
-                        Main.handleUnSpawn(input);
+                while ((objIn = ins.readObject()) != null) {
+                    if (objIn.getClass().toString().contains("java.lang.String")) {
+                        input = (String)objIn;
+                        if (input.equals("Bye.")) {
+                            break;
+                        } else if (input.length() > 3 && input.substring(0, 4).equals("+_)(")) {
+                            events.push(input.substring(5, input.length()));
+                            clearMap();
+                            printMap();
+                        }else if (input.split(Pattern.quote("||")).length > 1) {
+                            Main.handlePositionSync(input);
+                        } else if (input.split(Pattern.quote("++")).length > 1) {
+                            Main.handleSpawn(input);
+                        } else if (input.split(Pattern.quote("--")).length >= 1) {
+                            Main.handleUnSpawn(input);
+                        }
+                    } else {
+                        HashMap<String, Item> inv = (HashMap<String, Item>)objIn;
+                        members.get(name).inventory = inv;
                     }
                 }
                 

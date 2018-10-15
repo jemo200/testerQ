@@ -7,7 +7,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import testerq.core.Direction;
 import testerq.core.Item;
@@ -240,6 +244,15 @@ public class ServerThread extends Thread {
                             logs.quantity = 3;
                             member.inventory.put("treelogs", logs);
                         }
+                    }
+                    HashMap<String, Item> inventory = new HashMap<>();
+                    for (Entry<String,Item> e : member.inventory.entrySet()) {
+                        inventory.put(e.getKey(),e.getValue());
+                    }
+                    try {
+                        oOut.writeObject(inventory);
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
                     }
                 }
             }

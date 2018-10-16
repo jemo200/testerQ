@@ -10,8 +10,6 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import testerq.core.Direction;
 import testerq.core.Item;
@@ -237,6 +235,7 @@ public class ServerThread extends Thread {
                     if (cellSprite.equals("#")) {
                         if(member.inventory.get("treelogs") != null) {
                             member.inventory.get("treelogs").quantity += 3;
+                            System.out.println(member.inventory.get("treelogs").quantity);
                         } else {
                             Item logs = new Item();
                             logs.itemId = 00001;
@@ -251,6 +250,7 @@ public class ServerThread extends Thread {
                     }
                     try {
                         oOut.writeObject(inventory);
+                        oOut.reset();
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }

@@ -128,6 +128,15 @@ public class Main {
                                 String cellSprite = currentMap[members.get(name).getPositionX() - 1][members.get(name).getPositionY() + 1];
                                 handleInteract(cellSprite);
                             }
+                        } else if (fromUser.split(" ")[0].compareTo("list") == 0){
+                            String[] actions = fromUser.split(" ");
+                            String invent = "";
+                            if (actions[1].compareTo("inventory") == 0 || actions[1].compareTo("inv") == 0) {
+                                for (Map.Entry<String, Item> entry : members.get(name).inventory.entrySet()) {
+                                    invent += entry.getKey() + ": " + entry.getValue().quantity + ", ";
+                                }
+                                events.push(invent);
+                            }
                         } else {
                             oOut.writeObject("command::" + fromUser);
                         }
@@ -355,6 +364,7 @@ public class Main {
         InsHandler(ObjectInputStream ins) {
             this.ins = ins;
         }
+        
         String input;
         Object objIn;
         public void run() {
@@ -395,6 +405,7 @@ public class Main {
                         }
                     } else {
                         HashMap<String, Item> inv = (HashMap<String, Item>)objIn;
+                        System.out.println(inv.get("treelogs").quantity);
                         members.get(name).inventory = inv;
                     }
                 }

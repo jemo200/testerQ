@@ -136,8 +136,15 @@ public class Main {
                                     invent += entry.getKey() + ": " + entry.getValue().quantity + ", ";
                                 }
                                 events.push(invent);
+                                clearMap();
+                                printMap();
                             }
                         } else {
+                            if (fromUser.split(" ")[0].compareTo("chop") == 0) {
+                                events.push("You chopped 3 logs");
+                                clearMap();
+                                printMap();
+                            }
                             oOut.writeObject("command::" + fromUser);
                         }
                     } else {
@@ -405,7 +412,6 @@ public class Main {
                         }
                     } else {
                         HashMap<String, Item> inv = (HashMap<String, Item>)objIn;
-                        System.out.println(inv.get("treelogs").quantity);
                         members.get(name).inventory = inv;
                     }
                 }

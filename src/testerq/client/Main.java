@@ -132,12 +132,14 @@ public class Main {
                             String[] actions = fromUser.split(" ");
                             String invent = "";
                             if (actions[1].compareTo("inventory") == 0 || actions[1].compareTo("inv") == 0) {
-                                for (Map.Entry<String, Item> entry : members.get(name).inventory.entrySet()) {
-                                    invent += entry.getKey() + ": " + entry.getValue().quantity + ", ";
+                                if(members.get(name).inventory != null) {
+                                    for (Map.Entry<String, Item> entry : members.get(name).inventory.entrySet()) {
+                                        invent += entry.getKey() + ": " + entry.getValue().quantity + ", ";
+                                    }
+                                    events.push(invent);
                                 }
-                                events.push(invent);
                                 clearMap();
-                                printMap();
+                                printMap();  
                             }
                         } else {
                             if (fromUser.split(" ")[0].compareTo("chop") == 0) {

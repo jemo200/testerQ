@@ -98,6 +98,7 @@ public class ServerThread extends Thread {
                             ObjectInputStream persistenceIn = new ObjectInputStream(lIn);
                             MemberSave memSave = (MemberSave)persistenceIn.readObject();
                             member = new Member(name, memSave.position.x, memSave.position.y, memSave.avatar, memSave.zone);
+                            member.inventory = memSave.inventory;
                             NetworkServer.AddMember(member);
                             NetworkServer.AddListener(member.name, oOut);
                             persistenceIn.close();
@@ -121,6 +122,7 @@ public class ServerThread extends Thread {
                     oOut.writeObject(entry.getValue().name + "++" + entry.getValue().getPositionX() + "++" + entry.getValue().getPositionY() + "++" + entry.getValue().getSprite() + "++" + entry.getValue().getWorldZone());
                 }
             }
+            oOut.writeObject(member.inventory);
 
             while (true) {
                 input = oIn.readObject();
@@ -157,6 +159,7 @@ public class ServerThread extends Thread {
                 memSave.avatar = member.getSprite();
                 memSave.position = member.getPosition();
                 memSave.zone = member.getWorldZone();
+                memSave.inventory = member.inventory;
                 persistenceOut.writeObject(memSave);
                 persistenceOut.close();
                 System.out.println("Connection Closing..");

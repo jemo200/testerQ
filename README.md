@@ -1,12 +1,15 @@
 # Networking and Security
 
-... signifies where your jar is located in the filesystem. if you are in the same director simply use testerQ.jar
+... signifies where your jar is located in the filesystem. if you are in the same directory simply use testerQ.jar
 
 SERVER COMMAND(Windows): java -cp "C:\...\testerQ.jar" testerq.server.Main 3000
 CLIENT COMMAND(Windows): java -cp "C:\...\testerQ.jar" -D"file.encoding=UTF8" testerq.client.Main localhost 3000
 
 SERVER COMMAND(unix/mac): java -cp /.../testerQ.jar testerq.server.Main 3000
 CLIENT COMMAND(unix/mac): java -cp /.../testerQ.jar testerq.client.Main localhost 3000
+
+If jar is in current directory, run:
+java -cp testerQ.jar testerq.client.Main localhost 3000
 
 run SERVER COMMAND on port of choice
 
@@ -35,9 +38,10 @@ This will display an event log of your inspection
 
 enter: interact <DIRECTION>
 This will display an event log of your interaction
+**hint use "interact north" while standing in front of the king ($) within the castle.**
 
 enter: chop <DIRECTION>
-This will chop a tree and yield logs if there is a tree in the direction you chop
+This will chop a tree (#) and yield logs if there is a tree in the direction you chop
 
 enter: list inventory OR list inv
 This will display a event log with your current inventory

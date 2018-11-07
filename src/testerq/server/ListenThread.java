@@ -7,6 +7,9 @@ package testerq.server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import javax.net.ServerSocketFactory;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 
 /**
  *
@@ -22,7 +25,11 @@ public class ListenThread extends Thread {
     
     public void run() {
         try {
-            ServerSocket serverSocket = new ServerSocket(port);
+            ServerSocketFactory ssf = SSLServerSocketFactory.getDefault();
+            SSLServerSocket serverSocket = (SSLServerSocket)ssf.createServerSocket(port);
+            serverSocket.setEnabledCipherSuites(serverSocket.getEnabledCipherSuites());
+            serverSocket.setEnabledProtocols(serverSocket.getEnabledProtocols());
+            //ServerSocket serverSocket = new ServerSocket(port);
             try {
                 while (true) {
                     new ServerThread(serverSocket.accept()).start();

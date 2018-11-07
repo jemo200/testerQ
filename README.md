@@ -8,6 +8,9 @@ CLIENT COMMAND(Windows): java -cp "C:\...\testerQ.jar" -D"file.encoding=UTF8" te
 SERVER COMMAND(unix/mac): java -cp /.../testerQ.jar testerq.server.Main 3000
 CLIENT COMMAND(unix/mac): java -cp /.../testerQ.jar testerq.client.Main localhost 3000
 
+java -Djavax.net.ssl.keyStore=/Users/jacobemo/keystore.jks -Djavax.net.ssl.keyStorePassword=tester -Djavax.net.debug=ssl -cp "/Users/jacobemo/Repos/testerQ/dist/testerQ.jar" testerq.server.Main 3000
+java -Djavax.net.ssl.trustStore=/Users/jacobemo/keystore.jks -Djavax.net.ssl.trustStorePassword=tester -cp "/Users/jacobemo/Repos/testerQ/dist/testerQ.jar" testerq.client.Main localhost 3000
+
 If jar is in current directory, run:
 java -cp testerQ.jar testerq.client.Main localhost 3000
 

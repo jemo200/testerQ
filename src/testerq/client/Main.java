@@ -17,6 +17,9 @@ import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import testerq.core.Item;
 import testerq.core.Member;
 import testerq.core.ZoneMessage;
@@ -61,7 +64,13 @@ public class Main {
         }
 
         try {
-            Socket clientSocket = new Socket(hostName, portNumber);
+            SocketFactory ssf = SSLSocketFactory.getDefault();
+            SSLSocket clientSocket = (SSLSocket)ssf.createSocket(hostName, portNumber);
+            clientSocket.setEnabledCipherSuites(clientSocket.getEnabledCipherSuites());
+            clientSocket.setEnabledProtocols(clientSocket.getEnabledProtocols());
+            clientSocket.startHandshake();
+            
+            //Socket clientSocket = new Socket(hostName, portNumber);
             //PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
             ObjectOutputStream oOut = new ObjectOutputStream(clientSocket.getOutputStream());
             //mOut = out;

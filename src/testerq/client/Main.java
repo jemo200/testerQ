@@ -115,7 +115,7 @@ public class Main {
                                 handleInspect(cellSprite);
                             } else if (actions[1].compareTo("east") == 0 || actions[1].compareTo("e") == 0 || actions[1].compareTo("right") == 0) {
                                 //y + 1
-                                String cellSprite = currentMap[members.get(name).getPositionX() - 1][members.get(name).getPositionY() + 1];
+                                String cellSprite = currentMap[members.get(name).getPositionX()][members.get(name).getPositionY() + 1];
                                 handleInspect(cellSprite);
                             }
                         } else if (fromUser.split(" ")[0].compareTo("interact") == 0){
@@ -134,7 +134,7 @@ public class Main {
                                 handleInteract(cellSprite);
                             } else if (actions[1].compareTo("east") == 0 || actions[1].compareTo("e") == 0 || actions[1].compareTo("right") == 0) {
                                 //y + 1
-                                String cellSprite = currentMap[members.get(name).getPositionX() - 1][members.get(name).getPositionY() + 1];
+                                String cellSprite = currentMap[members.get(name).getPositionX()][members.get(name).getPositionY() + 1];
                                 handleInteract(cellSprite);
                             }
                         } else if (fromUser.split(" ")[0].compareTo("list") == 0){

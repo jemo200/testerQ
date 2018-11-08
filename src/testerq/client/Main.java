@@ -421,7 +421,8 @@ public class Main {
                         } else if (input.split(Pattern.quote("--")).length >= 1) {
                             Main.handleUnSpawn(input);
                         }
-                    } else {
+                    } else if (objIn.getClass().toString().contains("java.util.HashMap")){
+                        System.out.println();
                         HashMap<String, Item> inv = (HashMap<String, Item>)objIn;
                         members.get(name).inventory = inv;
                     }

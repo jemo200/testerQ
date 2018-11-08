@@ -9,4 +9,5 @@ public class MemberSave implements Serializable{
     public String zone;
     public String avatar;
     public HashMap<String, Item> inventory;
+    public HashMap<String, Quest> questlog;
 }

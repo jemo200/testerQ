@@ -8,6 +8,6 @@ public class MemberSave implements Serializable{
     public Point position;
     public String zone;
     public String avatar;
-    public HashMap<String, Item> inventory;
-    public HashMap<String, Quest> questlog;
+    public Inventory inventory;
+    public QuestLog questlog;
 }

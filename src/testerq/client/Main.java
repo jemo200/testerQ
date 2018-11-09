@@ -16,12 +16,17 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import testerq.core.Inventory;
 import testerq.core.Item;
 import testerq.core.Member;
+import testerq.core.Quest;
+import testerq.core.QuestLog;
 import testerq.core.ZoneMessage;
 import testerq.core.map.MapManager;
 /**
@@ -142,7 +147,7 @@ public class Main {
                             String invent = "";
                             if (actions[1].compareTo("inventory") == 0 || actions[1].compareTo("inv") == 0) {
                                 if(members.get(name).inventory != null) {
-                                    for (Map.Entry<String, Item> entry : members.get(name).inventory.entrySet()) {
+                                    for (Map.Entry<String, Item> entry : members.get(name).inventory.inventory.entrySet()) {
                                         invent += entry.getKey() + ": " + entry.getValue().quantity + ", ";
                                     }
                                     events.push(invent);
@@ -196,6 +201,8 @@ public class Main {
         String avatar = chunks[3];
         String worldZone = chunks[4];
         Member mem = new Member(nameIn, x, y, avatar, worldZone);
+        mem.inventory = new Inventory();
+        mem.questLog = new QuestLog();
         if(nameIn.equals(Main.name)) {
             currentMap = mapManager.zones.get(mem.getWorldZone()).zone2DArray;
         }
@@ -221,7 +228,7 @@ public class Main {
     }
     
     private static void printMap() {
-        clearConsole();
+        //clearConsole();
         //PRINT MAP
         System.out.println(System.getProperty("line.separator"));
         Member member = members.get(name);
@@ -365,12 +372,40 @@ public class Main {
     }
     
     private static void handleInteract(String sprite) {
+        System.out.println(members.get(name));
+            System.out.println(members.get(name).questLog);
+            System.out.println(members.get(name).questLog.questLog);
+            System.out.println(members.get(name).questLog.questLog.get("quest1"));
         if (sprite.equals("$")) {
             events.push("(King Leroy) Greetings. Our lands are in need of a hero like yourself! Find Macari and help him for a reward.");
+            
+            if(members.get(name).questLog.questLog.get("quest1").currentTask == 0) {
+                members.get(name).questLog.questLog.get("quest1").currentTask = 1;
+            }
         } else if (sprite.equals("R")) {
             events.push("(citizen) Good day to you.");
         } else if (sprite.equals("M")) {
+            if(members.get(name).questLog.questLog.get("quest1").complete == true) {
+                events.push("(Macari) Hope you are putting that pickaxe to good use!");
+            } else if ((members.get(name).inventory.inventory.containsKey("treelogs") && members.get(name).inventory.inventory.get("treelogs").quantity >= 20) && members.get(name).questLog.questLog.get("quest1").currentTask == 2) {
+                events.push("(Macari) Thank you for help. Here is a small reward. **Quest Complete**");
+                members.get(name).inventory.inventory.get("treelogs").quantity -= 20;
+                members.get(name).inventory.inventory.put("pickaxe", members.get(name).questLog.questLog.get("quest1").reward.get(0));
+                events.push("You recieved a sturdy pickaxe.");
+                members.get(name).questLog.questLog.get("quest1").complete = true;
+            } else if ((members.get(name).inventory.inventory.get("treelogs") == null || members.get(name).inventory.inventory.get("treelogs").quantity < 20) && members.get(name).questLog.questLog.get("quest1").currentTask == 2) {
+                events.push("(Macari) Could you bring me those 20 wood logs?");
+            } else if (members.get(name).questLog.questLog.get("quest1").currentTask == 1) {
             events.push("(Macari) Hero! I an in need of wood to fuel my smelting operation. Could you bring me 20 wood logs?");
+            members.get(name).questLog.questLog.get("quest1").currentTask = 2;
+            } else {
+                events.push("(Macari) Have you ever been in the castle? The King loves visitors!");
+            }
+        }
+        try {
+            Main.mOOut.writeObject(members.get(name).questLog);
+            Main.mOOut.reset();
+        } catch (IOException ex) {
         }
         clearMap();
         printMap();
@@ -421,10 +456,13 @@ public class Main {
                         } else if (input.split(Pattern.quote("--")).length >= 1) {
                             Main.handleUnSpawn(input);
                         }
-                    } else if (objIn.getClass().toString().contains("java.util.HashMap")){
-                        System.out.println();
-                        HashMap<String, Item> inv = (HashMap<String, Item>)objIn;
-                        members.get(name).inventory = inv;
+                    } else if (objIn.getClass().toString().contains("testerq.core.Inventory")){
+                            Inventory inv = (Inventory)objIn;
+                            members.get(name).inventory = inv;
+                        
+                    } else if (objIn.getClass().toString().contains("testerq.core.QuestLog")) {
+                        QuestLog ql = (QuestLog)objIn;
+                        members.get(name).questLog = ql;
                     }
                 }
                 

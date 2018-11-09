@@ -7,7 +7,8 @@ import java.util.HashMap;
 public class Member extends GameObject{
     
     public String name;
-    public HashMap<String,Item> inventory = new HashMap<>();
+    public Inventory inventory;
+    public QuestLog questLog;
     
     public Member(String name, int x, int y, String sprite) {
         super();

@@ -7,16 +7,21 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 import testerq.core.Direction;
+import testerq.core.Inventory;
 import testerq.core.Item;
 import testerq.core.MapTransfer;
 import testerq.core.Member;
 import testerq.core.MemberAccount;
 import testerq.core.MemberSave;
+import testerq.core.Quest;
+import testerq.core.QuestLog;
+import testerq.core.Task;
 import testerq.core.ZoneMessage;
 
 public class ServerThread extends Thread {
@@ -73,6 +78,24 @@ public class ServerThread extends Thread {
                         credentialOut.close();
 
                         member = new Member(name, cellX, cellY, avatar, "area1zone1");
+                        member.inventory = new Inventory();
+                        member.questLog = new QuestLog();
+                        Quest quest1 = new Quest();
+                        quest1.complete = false;
+                        quest1.currentTask = 0;
+                        ArrayList<Task> tasks = new ArrayList();
+                        tasks.add(new Task("interact King Leroy"));
+                        tasks.add(new Task("interact Macari"));
+                        tasks.add(new Task("interact Macari 20 treelogs"));
+                        quest1.tasks = tasks;
+                        ArrayList<Item> reward = new ArrayList();
+                        Item item1 = new Item();
+                        item1.itemId = 00002;
+                        item1.name = "pickaxe";
+                        item1.quantity = 1;
+                        reward.add(item1);
+                        quest1.reward = reward;
+                        member.questLog.questLog.put("quest1", quest1);
                         NetworkServer.AddMember(member);
                         NetworkServer.AddListener(member.name, oOut);
                         oOut.writeObject("Account Created Successfully");
@@ -99,6 +122,7 @@ public class ServerThread extends Thread {
                             MemberSave memSave = (MemberSave)persistenceIn.readObject();
                             member = new Member(name, memSave.position.x, memSave.position.y, memSave.avatar, memSave.zone);
                             member.inventory = memSave.inventory;
+                            member.questLog = memSave.questlog;
                             NetworkServer.AddMember(member);
                             NetworkServer.AddListener(member.name, oOut);
                             persistenceIn.close();
@@ -123,6 +147,9 @@ public class ServerThread extends Thread {
                 }
             }
             oOut.writeObject(member.inventory);
+            oOut.reset();
+            oOut.writeObject(member.questLog);
+            oOut.reset();
 
             while (true) {
                 input = oIn.readObject();
@@ -135,6 +162,11 @@ public class ServerThread extends Thread {
                     ZoneMessage zMsg = new ZoneMessage();
                     zMsg = (ZoneMessage)input;
                     handleZoneMessage(zMsg);
+                } else if (input.getClass().toString().contains("testerq.core.QuestLog")){
+
+                    QuestLog ql = (QuestLog)input;
+                    member.questLog = ql;
+                        
                 }       
             }
         } catch (IOException e) {
@@ -160,6 +192,7 @@ public class ServerThread extends Thread {
                 memSave.position = member.getPosition();
                 memSave.zone = member.getWorldZone();
                 memSave.inventory = member.inventory;
+                memSave.questlog = member.questLog;
                 persistenceOut.writeObject(memSave);
                 persistenceOut.close();
                 System.out.println("Connection Closing..");
@@ -236,23 +269,23 @@ public class ServerThread extends Thread {
                 }
                 if (cellSprite != null) {
                     if (cellSprite.equals("#")) {
-                        if(member.inventory.get("treelogs") != null) {
-                            member.inventory.get("treelogs").quantity += 3;
-                            System.out.println(member.inventory.get("treelogs").quantity);
+                        if(member.inventory.inventory.get("treelogs") != null) {
+                            member.inventory.inventory.get("treelogs").quantity += 3;
+                            System.out.println(member.inventory.inventory.get("treelogs").quantity);
                         } else {
                             Item logs = new Item();
                             logs.itemId = 00001;
                             logs.name = "wood logs";
                             logs.quantity = 3;
-                            member.inventory.put("treelogs", logs);
+                            member.inventory.inventory.put("treelogs", logs);
                         }
                     }
-                    HashMap<String, Item> inventory = new HashMap<>();
-                    for (Entry<String,Item> e : member.inventory.entrySet()) {
-                        inventory.put(e.getKey(),e.getValue());
-                    }
+                    //HashMap<String, Item> inventory = new HashMap<>();
+                    //for (Entry<String,Item> e : member.inventory.entrySet()) {
+                    //    inventory.put(e.getKey(),e.getValue());
+                    //}
                     try {
-                        oOut.writeObject(inventory);
+                        oOut.writeObject(member.inventory);
                         oOut.reset();
                     } catch (IOException ex) {
                         ex.printStackTrace();
@@ -357,6 +390,10 @@ public class ServerThread extends Thread {
                         oOut.writeObject(entry.getValue().name + "++" + entry.getValue().getPositionX() + "++" + entry.getValue().getPositionY() + "++" + entry.getValue().getSprite() + "++" + entry.getValue().getWorldZone());
                     }
                 }
+                oOut.writeObject(member.inventory);
+                oOut.reset();
+                oOut.writeObject(member.questLog);
+                oOut.reset();
             } catch (IOException e) {
                 
             }

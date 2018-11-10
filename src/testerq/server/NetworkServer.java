@@ -27,8 +27,14 @@ public class NetworkServer {
     public static HashMap<String, NInanimate> inanimates = new HashMap<String, NInanimate>();
 
     private static HashMap<String, ObjectOutputStream> writers = new HashMap<String, ObjectOutputStream>();
+
+    public static HashMap<String, ObjectOutputStream> getWriters() {
+        return writers;
+    }
     
     public static MapManager mapManager = new MapManager();
+    public static TradeManager tradeManager = new TradeManager();
+    public static ItemList items = new ItemList();
     
     private NetworkServer() {
         

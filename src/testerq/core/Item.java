@@ -7,4 +7,10 @@ public class Item implements Serializable{
     public int itemId;
     public int quantity;
     
+    public Item(String name, int itemId, int quantity) {
+        this.name = name;
+        this.itemId = itemId;
+        this.quantity = quantity;
+    }
+    
 }

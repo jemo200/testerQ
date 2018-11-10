@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import testerq.core.Direction;
 import testerq.core.Inventory;
@@ -89,13 +91,11 @@ public class ServerThread extends Thread {
                         tasks.add(new Task("interact Macari 20 treelogs"));
                         quest1.tasks = tasks;
                         ArrayList<Item> reward = new ArrayList();
-                        Item item1 = new Item();
-                        item1.itemId = 00002;
-                        item1.name = "pickaxe";
-                        item1.quantity = 1;
+                        Item item1 = new Item("pickaxe", 00002, 1);
                         reward.add(item1);
                         quest1.reward = reward;
                         member.questLog.questLog.put("quest1", quest1);
+                        member.inventory.inventory.put("coins", new Item("coins", 00004, 10));
                         NetworkServer.AddMember(member);
                         NetworkServer.AddListener(member.name, oOut);
                         oOut.writeObject("Account Created Successfully");
@@ -163,11 +163,12 @@ public class ServerThread extends Thread {
                     zMsg = (ZoneMessage)input;
                     handleZoneMessage(zMsg);
                 } else if (input.getClass().toString().contains("testerq.core.QuestLog")){
-
                     QuestLog ql = (QuestLog)input;
                     member.questLog = ql;
-                        
-                }       
+                } else if (input.getClass().toString().contains("testerq.core.Inventory")){
+                    Inventory inv = (Inventory)input;
+                    member.inventory = inv;
+                }     
             }
         } catch (IOException e) {
             input = this.getName();
@@ -273,22 +274,89 @@ public class ServerThread extends Thread {
                             member.inventory.inventory.get("treelogs").quantity += 3;
                             System.out.println(member.inventory.inventory.get("treelogs").quantity);
                         } else {
-                            Item logs = new Item();
-                            logs.itemId = 00001;
-                            logs.name = "wood logs";
-                            logs.quantity = 3;
+                            Item logs = new Item("treelogs", 00001, 3);
                             member.inventory.inventory.put("treelogs", logs);
                         }
                     }
-                    //HashMap<String, Item> inventory = new HashMap<>();
-                    //for (Entry<String,Item> e : member.inventory.entrySet()) {
-                    //    inventory.put(e.getKey(),e.getValue());
-                    //}
                     try {
                         oOut.writeObject(member.inventory);
                         oOut.reset();
                     } catch (IOException ex) {
                         ex.printStackTrace();
+                    }
+                }
+            } else if (actions[0].compareTo("trade") == 0) {
+                if(NetworkServer.tradeManager.trades.containsKey(actions[1])) {
+                    Item tradingFor = NetworkServer.tradeManager.trades.get(actions[1]).tradingFor;
+                    Item trading = NetworkServer.tradeManager.trades.get(actions[1]).trading;
+                    Member tradeHost = NetworkServer.getMembers().get(actions[1]);
+                    if(member.inventory.inventory.containsKey(tradingFor.name) && member.inventory.inventory.get(tradingFor.name).quantity >= tradingFor.quantity) {
+                        //This member
+                        member.inventory.inventory.get(tradingFor.name).quantity -= tradingFor.quantity;
+                        if(member.inventory.inventory.get(tradingFor.name).quantity == 0) {
+                            member.inventory.inventory.remove(tradingFor.name);
+                        }
+                        if(member.inventory.inventory.containsKey(trading.name)){
+                           member.inventory.inventory.get(trading.name).quantity += trading.quantity; 
+                        } else {
+                            member.inventory.inventory.put(trading.name, new Item(trading.name, trading.itemId, trading.quantity));
+                        }
+                        try {
+                            oOut.writeObject(member.inventory);
+                            oOut.writeObject("+_)( " + "[System] Traded " + tradingFor.quantity + " " + tradingFor.name + " for " + trading.quantity + " " + trading.name + " with " + tradeHost.name);
+                            oOut.reset();
+                        } catch (IOException ex) {
+                        }
+                        //Member who hosted trade
+                        tradeHost.inventory.inventory.get(trading.name).quantity -= trading.quantity;
+                        if(tradeHost.inventory.inventory.get(trading.name).quantity == 0) {
+                            tradeHost.inventory.inventory.remove(trading.name);
+                        }
+                        if(tradeHost.inventory.inventory.containsKey(tradingFor.name)){
+                           tradeHost.inventory.inventory.get(tradingFor.name).quantity += tradingFor.quantity; 
+                        } else {
+                            if (tradingFor.quantity > 0) {
+                            tradeHost.inventory.inventory.put(tradingFor.name, new Item(tradingFor.name, tradingFor.itemId, tradingFor.quantity));
+                            }
+                        }
+                        try {
+                            NetworkServer.getWriters().get(tradeHost.name).writeObject(tradeHost.inventory);
+                            NetworkServer.getWriters().get(tradeHost.name).writeObject("+_)( " + "[System] Traded " + trading.quantity + " " + trading.name + " for " + tradingFor.quantity + " " + tradingFor.name + " with " + member.name);
+                            NetworkServer.getWriters().get(tradeHost.name).reset();
+                        } catch (IOException ex) {
+                        }
+                        NetworkServer.tradeManager.trades.remove(tradeHost.name);
+                        
+                    } else {
+                        try {
+                            oOut.writeObject("+_)( " + "[System] You do not meet the trade requirements.");
+                        } catch (IOException ex) {
+                        }
+                    }
+                } else {
+                    try {
+                        oOut.writeObject("+_)( " + "[System] That trade is not available.");
+                    } catch (IOException ex) {
+                    }
+                }
+                
+            } else if (actions[0].compareTo("trading") == 0) {
+                int tradingQuantity = Integer.parseInt(actions[1]);
+                String tradingItemName = actions[2];
+                int tradingForQuantity = Integer.parseInt(actions[4]);
+                String tradingForItemName = actions[5];
+                if(member.inventory.inventory.containsKey(tradingItemName) && member.inventory.inventory.get(tradingItemName).quantity >= tradingQuantity) {
+                    Trade trade = new Trade();
+                    Item trading = new Item(tradingItemName, NetworkServer.items.items.get(tradingItemName).itemId, tradingQuantity);
+                    Item tradingFor = new Item(tradingForItemName, NetworkServer.items.items.get(tradingForItemName).itemId, tradingForQuantity);
+                    trade.trading = trading;
+                    trade.tradingFor = tradingFor;
+                    NetworkServer.tradeManager.trades.put(member.name, trade);
+                    NetworkServer.Broadcast("+_)( " + "[" + member.name + "] trading " + trading.quantity + " " + trading.name + " for " + tradingFor.quantity + " " + tradingFor.name);
+                } else {
+                    try {
+                        oOut.writeObject("+_)( " + "[System] You do not have a sufficient number of that item.");
+                    } catch (IOException ex) {
                     }
                 }
             }

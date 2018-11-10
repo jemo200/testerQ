@@ -405,6 +405,8 @@ public class Main {
         try {
             Main.mOOut.writeObject(members.get(name).questLog);
             Main.mOOut.reset();
+            Main.mOOut.writeObject(members.get(name).inventory);
+            Main.mOOut.reset();
         } catch (IOException ex) {
         }
         clearMap();

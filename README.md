@@ -8,11 +8,14 @@ CLIENT COMMAND(Windows): java -cp "C:\...\testerQ.jar" -D"file.encoding=UTF8" te
 SERVER COMMAND(unix/mac): java -cp /.../testerQ.jar testerq.server.Main 3000
 CLIENT COMMAND(unix/mac): java -cp /.../testerQ.jar testerq.client.Main localhost 3000
 
-java -Djavax.net.ssl.keyStore=/Users/jacobemo/keystore.jks -Djavax.net.ssl.keyStorePassword=tester -Djavax.net.debug=ssl -cp "/Users/jacobemo/Repos/testerQ/dist/testerQ.jar" testerq.server.Main 3000
-java -Djavax.net.ssl.trustStore=/Users/jacobemo/keystore.jks -Djavax.net.ssl.trustStorePassword=tester -cp "/Users/jacobemo/Repos/testerQ/dist/testerQ.jar" testerq.client.Main localhost 3000
+To run server from testerQ root:
+java -Djavax.net.ssl.keyStore=/Users/jacobemo/keystore.jks -Djavax.net.ssl.keyStorePassword=tester -Djavax.net.debug=ssl -cp dist/testerQ.jar testerq.server.Main 3000
 
 If jar is in current directory, run:
-java -cp testerQ.jar testerq.client.Main localhost 3000
+java -Djavax.net.ssl.trustStore=../keystore.jks -Djavax.net.ssl.trustStorePassword=tester -cp testerQ.jar testerq.client.Main localhost 3000
+
+From testerQ file root run:
+java -Djavax.net.ssl.trustStore=keystore.jks -Djavax.net.ssl.trustStorePassword=tester -cp dist/testerQ.jar testerq.client.Main localhost 3000
 
 run SERVER COMMAND on port of choice
 
@@ -48,6 +51,27 @@ This will chop a tree (#) and yield logs if there is a tree in the direction you
 
 enter: list inventory OR list inv
 This will display a event log with your current inventory
+
+enter: trading <NUMBER> <ITEM NAME> for <NUMBER> <ITEM NAME>
+This will propose a trade
+
+enter: trade <PLAYER NAME>
+This will accept and complete a trade
+
+****QUEST GUIDE**********
+interact with King Leroy "$" in the castle, he will tell you to find Macari
+leave the castle and move north-east until you see an "M" interact with Macari
+Macari will ask you to fetch him 20 treelogs
+go find a tree "#" and enter the chop command until you have collected 20 or more treelogs (validate using the list inventory command)
+return and interact with Macari with 20 treelogs in your inventory and the quest will be complete.
+You should recieve a pickaxe as your reward.
+
+*******TRADE GUIDE**********
+With two players ("player1" and "player2") logged in:
+player1 type: "trading 3 coins for 2 coins"
+player2 type: "trade player1"
+Your event log should confirm the trade
+type: "list inventory" on both players to verify the trade.
 
 *******CONFIGURATION************
 enter: config vwidth 35 OR config vheight 40

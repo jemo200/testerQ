@@ -150,17 +150,12 @@ public class Main {
                                     for (Map.Entry<String, Item> entry : members.get(name).inventory.inventory.entrySet()) {
                                         invent += entry.getKey() + ": " + entry.getValue().quantity + ", ";
                                     }
-                                    events.push(invent);
+                                    events.push("Inventory -> " + invent);
                                 }
                                 clearMap();
                                 printMap();  
                             }
                         } else {
-                            if (fromUser.split(" ")[0].compareTo("chop") == 0) {
-                                events.push("You chopped 3 logs");
-                                clearMap();
-                                printMap();
-                            }
                             oOut.writeObject("command::" + fromUser);
                         }
                     } else {

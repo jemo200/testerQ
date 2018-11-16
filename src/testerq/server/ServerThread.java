@@ -277,12 +277,13 @@ public class ServerThread extends Thread {
                             Item logs = new Item("treelogs", 00001, 3);
                             member.inventory.inventory.put("treelogs", logs);
                         }
-                    }
-                    try {
-                        oOut.writeObject(member.inventory);
-                        oOut.reset();
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
+                        try {
+                            oOut.writeObject(member.inventory);
+                            oOut.writeObject("+_)( " + "[System] You picked up 3 treelogs");
+                            oOut.reset();
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
                     }
                 }
             } else if (actions[0].compareTo("trade") == 0) {

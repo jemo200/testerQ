@@ -9,6 +9,7 @@ public class Member extends GameObject{
     public String name;
     public Inventory inventory;
     public QuestLog questLog;
+    public MemberStats stats;
     
     public Member(String name, int x, int y, String sprite) {
         super();

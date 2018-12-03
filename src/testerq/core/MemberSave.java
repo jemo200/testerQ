@@ -10,4 +10,5 @@ public class MemberSave implements Serializable{
     public String avatar;
     public Inventory inventory;
     public QuestLog questlog;
+    public MemberStats stats;
 }

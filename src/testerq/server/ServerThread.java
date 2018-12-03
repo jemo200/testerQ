@@ -32,6 +32,7 @@ import testerq.core.MapTransfer;
 import testerq.core.Member;
 import testerq.core.MemberAccount;
 import testerq.core.MemberSave;
+import testerq.core.MemberStats;
 import testerq.core.Quest;
 import testerq.core.QuestLog;
 import testerq.core.Task;
@@ -96,6 +97,7 @@ public class ServerThread extends Thread {
                         member = new Member(name, cellX, cellY, avatar, "area1zone1");
                         member.inventory = new Inventory();
                         member.questLog = new QuestLog();
+                        member.stats = new MemberStats();
                         Quest quest1 = new Quest();
                         quest1.complete = false;
                         quest1.currentTask = 0;

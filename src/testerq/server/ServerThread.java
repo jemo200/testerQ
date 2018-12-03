@@ -4,16 +4,27 @@ package testerq.server;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
 import java.net.Socket;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SealedObject;
+import javax.crypto.spec.SecretKeySpec;
 import testerq.core.Direction;
 import testerq.core.Inventory;
 import testerq.core.Item;
@@ -27,6 +38,8 @@ import testerq.core.Task;
 import testerq.core.ZoneMessage;
 
 public class ServerThread extends Thread {
+    private static final byte[] key = "MyDifficultPassw".getBytes();
+    private static final String transformation = "AES/ECB/PKCS5Padding";
     Member member;
     int gridX = 0;
     int gridY = 0;
@@ -76,8 +89,9 @@ public class ServerThread extends Thread {
                         memAcc.userPw = pwIn;
                         FileOutputStream fOut = new FileOutputStream(name + "Account");
                         ObjectOutputStream credentialOut = new ObjectOutputStream(fOut);
-                        credentialOut.writeObject(memAcc);
-                        credentialOut.close();
+                        encrypt(memAcc, credentialOut);
+                        //credentialOut.writeObject(memAcc);
+                        //credentialOut.close();
 
                         member = new Member(name, cellX, cellY, avatar, "area1zone1");
                         member.inventory = new Inventory();
@@ -115,11 +129,13 @@ public class ServerThread extends Thread {
                         }
                         FileInputStream fIn = new FileInputStream(name + "Account");
                         ObjectInputStream credentialIn = new ObjectInputStream(fIn);
-                        MemberAccount memAcc = (MemberAccount)credentialIn.readObject();
+                        //MemberAccount memAcc = (MemberAccount)credentialIn.readObject();
+                        MemberAccount memAcc = (MemberAccount)decrypt(credentialIn);
                         if(memAcc.userPw.compareTo(pwIn) == 0) {
                             FileInputStream lIn = new FileInputStream(name);
                             ObjectInputStream persistenceIn = new ObjectInputStream(lIn);
-                            MemberSave memSave = (MemberSave)persistenceIn.readObject();
+                            //MemberSave memSave = (MemberSave)persistenceIn.readObject();
+                            MemberSave memSave = (MemberSave)decrypt(persistenceIn);
                             member = new Member(name, memSave.position.x, memSave.position.y, memSave.avatar, memSave.zone);
                             member.inventory = memSave.inventory;
                             member.questLog = memSave.questlog;
@@ -194,8 +210,13 @@ public class ServerThread extends Thread {
                 memSave.zone = member.getWorldZone();
                 memSave.inventory = member.inventory;
                 memSave.questlog = member.questLog;
-                persistenceOut.writeObject(memSave);
-                persistenceOut.close();
+                //persistenceOut.writeObject(memSave);
+                try {
+                    encrypt(memSave, persistenceOut);
+                } catch (Exception ex) {
+                    System.out.println(ex);
+                }
+                //persistenceOut.close();
                 System.out.println("Connection Closing..");
                 if (oIn != null) {
                     oIn.close();
@@ -473,5 +494,42 @@ public class ServerThread extends Thread {
     
     private void handleZoneMessage(ZoneMessage zMsg) {
         NetworkServer.Broadcast(member.getWorldZone(), "+_)( " + "[" + member.name + "]: " +zMsg.msg);
+    }
+    
+    public static void encrypt(Serializable object, OutputStream ostream) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException {
+        try {
+            // Length is 16 byte
+            SecretKeySpec sks = new SecretKeySpec(key, "AES");
+
+            // Create cipher
+            Cipher cipher = Cipher.getInstance(transformation);
+            cipher.init(Cipher.ENCRYPT_MODE, sks);
+            SealedObject sealedObject = new SealedObject(object, cipher);
+
+            // Wrap the output stream
+            CipherOutputStream cos = new CipherOutputStream(ostream, cipher);
+            ObjectOutputStream outputStream = new ObjectOutputStream(cos);
+            outputStream.writeObject(sealedObject);
+            outputStream.close();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public static Object decrypt(InputStream istream) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
+        SecretKeySpec sks = new SecretKeySpec(key, "AES");
+        Cipher cipher = Cipher.getInstance(transformation);
+        cipher.init(Cipher.DECRYPT_MODE, sks);
+
+        CipherInputStream cipherInputStream = new CipherInputStream(istream, cipher);
+        ObjectInputStream inputStream = new ObjectInputStream(cipherInputStream);
+        SealedObject sealedObject;
+        try {
+            sealedObject = (SealedObject) inputStream.readObject();
+            return sealedObject.getObject(cipher);
+        } catch (ClassNotFoundException | IllegalBlockSizeException | BadPaddingException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

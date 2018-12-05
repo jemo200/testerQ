@@ -14,8 +14,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -35,6 +33,7 @@ import testerq.core.MemberSave;
 import testerq.core.MemberStats;
 import testerq.core.Quest;
 import testerq.core.QuestLog;
+import testerq.core.Skill;
 import testerq.core.Task;
 import testerq.core.ZoneMessage;
 
@@ -98,6 +97,7 @@ public class ServerThread extends Thread {
                         member.inventory = new Inventory();
                         member.questLog = new QuestLog();
                         member.stats = new MemberStats();
+                        member.stats.stats.put("woodcutting", new Skill());
                         Quest quest1 = new Quest();
                         quest1.complete = false;
                         quest1.currentTask = 0;
@@ -141,6 +141,7 @@ public class ServerThread extends Thread {
                             member = new Member(name, memSave.position.x, memSave.position.y, memSave.avatar, memSave.zone);
                             member.inventory = memSave.inventory;
                             member.questLog = memSave.questlog;
+                            member.stats = memSave.stats;
                             NetworkServer.AddMember(member);
                             NetworkServer.AddListener(member.name, oOut);
                             persistenceIn.close();
@@ -167,6 +168,8 @@ public class ServerThread extends Thread {
             oOut.writeObject(member.inventory);
             oOut.reset();
             oOut.writeObject(member.questLog);
+            oOut.reset();
+            oOut.writeObject(member.stats);
             oOut.reset();
 
             while (true) {
@@ -212,6 +215,7 @@ public class ServerThread extends Thread {
                 memSave.zone = member.getWorldZone();
                 memSave.inventory = member.inventory;
                 memSave.questlog = member.questLog;
+                memSave.stats = member.stats;
                 //persistenceOut.writeObject(memSave);
                 try {
                     encrypt(memSave, persistenceOut);
@@ -246,142 +250,194 @@ public class ServerThread extends Thread {
             int playerY = NetworkServer.getMembers().get(member.name).getPositionY();
             String[] actions = action.split(" ");
             if(actions[0].compareTo("move") == 0 || actions[0].compareTo("mv") == 0) {
-                String[][] worldArray = NetworkServer.mapManager.zones.get(member.getWorldZone()).zone2DArray;
-                if (actions[1].compareTo("north") == 0 || actions[1].compareTo("n") == 0 || actions[1].compareTo("up") == 0) {
-                    if (actions.length == 3) {
-                        int numMoves = Integer.parseInt(actions[2]);
-                        handleMove(worldArray, Direction.North, playerX, playerY, numMoves);
-                    } else {
-                        handleMove(worldArray, Direction.North, playerX, playerY, 1);
-                    }
+                if (actions.length == 2 || actions.length == 3) {
+                    String[][] worldArray = NetworkServer.mapManager.zones.get(member.getWorldZone()).zone2DArray;
+                    if (actions[1].compareTo("north") == 0 || actions[1].compareTo("n") == 0 || actions[1].compareTo("up") == 0) {
+                        if (actions.length == 3) {
+                            int numMoves = Integer.parseInt(actions[2]);
+                            handleMove(worldArray, Direction.North, playerX, playerY, numMoves);
+                        } else {
+                            handleMove(worldArray, Direction.North, playerX, playerY, 1);
+                        }
 
-                } else if (actions[1].compareTo("south") == 0 || actions[1].compareTo("s") == 0 ||actions[1].compareTo("down") == 0) {
-                    if (actions.length == 3) {
-                        int numMoves = Integer.parseInt(actions[2]);
-                        handleMove(worldArray, Direction.South, playerX, playerY, numMoves);
-                    } else {
-                        handleMove(worldArray, Direction.South, playerX, playerY, 1);
-                    }
+                    } else if (actions[1].compareTo("south") == 0 || actions[1].compareTo("s") == 0 ||actions[1].compareTo("down") == 0) {
+                        if (actions.length == 3) {
+                            int numMoves = Integer.parseInt(actions[2]);
+                            handleMove(worldArray, Direction.South, playerX, playerY, numMoves);
+                        } else {
+                            handleMove(worldArray, Direction.South, playerX, playerY, 1);
+                        }
 
-                } else if (actions[1].compareTo("west") == 0 || actions[1].compareTo("w") == 0 || actions[1].compareTo("left") == 0) {
-                    if (actions.length == 3) {
-                        int numMoves = Integer.parseInt(actions[2]);
-                        handleMove(worldArray, Direction.West, playerX, playerY, numMoves);
-                    } else {
-                        handleMove(worldArray, Direction.West, playerX, playerY, 1);     
-                    }
+                    } else if (actions[1].compareTo("west") == 0 || actions[1].compareTo("w") == 0 || actions[1].compareTo("left") == 0) {
+                        if (actions.length == 3) {
+                            int numMoves = Integer.parseInt(actions[2]);
+                            handleMove(worldArray, Direction.West, playerX, playerY, numMoves);
+                        } else {
+                            handleMove(worldArray, Direction.West, playerX, playerY, 1);     
+                        }
 
-                } else if (actions[1].compareTo("east") == 0 || actions[1].compareTo("e") == 0 || actions[1].compareTo("right") == 0) {
-                    if (actions.length == 3) {
-                        int numMoves = Integer.parseInt(actions[2]);
-                        handleMove(worldArray, Direction.East, playerX, playerY, numMoves);
-                    } else {
-                        handleMove(worldArray, Direction.East, playerX, playerY, 1);     
+                    } else if (actions[1].compareTo("east") == 0 || actions[1].compareTo("e") == 0 || actions[1].compareTo("right") == 0) {
+                        if (actions.length == 3) {
+                            int numMoves = Integer.parseInt(actions[2]);
+                            handleMove(worldArray, Direction.East, playerX, playerY, numMoves);
+                        } else {
+                            handleMove(worldArray, Direction.East, playerX, playerY, 1);     
+                        }
+                    }
+                } else {
+                    try {
+                        oOut.writeObject("+_)( " + "[System] Move command format: move <direction> OR move <direction> <number steps>");
+                    } catch (IOException ex) {
                     }
                 }
             } else if (actions[0].compareTo("chop") == 0) {
-                String[][] worldArray = NetworkServer.mapManager.zones.get(member.getWorldZone()).zone2DArray;
-                String cellSprite = null;
-                if (actions[1].compareTo("north") == 0 || actions[1].compareTo("n") == 0 || actions[1].compareTo("up") == 0) {
-                    cellSprite = worldArray[playerX - 1][playerY];
-                } else if (actions[1].compareTo("south") == 0 || actions[1].compareTo("s") == 0 ||actions[1].compareTo("down") == 0) {
-                    cellSprite = worldArray[playerX + 1][playerY];
-                } else if (actions[1].compareTo("west") == 0 || actions[1].compareTo("w") == 0 || actions[1].compareTo("left") == 0) {
-                    cellSprite = worldArray[playerX][playerY - 1];
-                } else if (actions[1].compareTo("east") == 0 || actions[1].compareTo("e") == 0 || actions[1].compareTo("right") == 0) {
-                    cellSprite = worldArray[playerX][playerY + 1];
-                }
-                if (cellSprite != null) {
-                    if (cellSprite.equals("#")) {
-                        if(member.inventory.inventory.get("treelogs") != null) {
-                            member.inventory.inventory.get("treelogs").quantity += 3;
-                            System.out.println(member.inventory.inventory.get("treelogs").quantity);
-                        } else {
-                            Item logs = new Item("treelogs", 00001, 3);
-                            member.inventory.inventory.put("treelogs", logs);
+                if (actions.length == 2) {
+                    String[][] worldArray = NetworkServer.mapManager.zones.get(member.getWorldZone()).zone2DArray;
+                    String cellSprite = null;
+                    if (actions[1].compareTo("north") == 0 || actions[1].compareTo("n") == 0 || actions[1].compareTo("up") == 0) {
+                        cellSprite = worldArray[playerX - 1][playerY];
+                    } else if (actions[1].compareTo("south") == 0 || actions[1].compareTo("s") == 0 ||actions[1].compareTo("down") == 0) {
+                        cellSprite = worldArray[playerX + 1][playerY];
+                    } else if (actions[1].compareTo("west") == 0 || actions[1].compareTo("w") == 0 || actions[1].compareTo("left") == 0) {
+                        cellSprite = worldArray[playerX][playerY - 1];
+                    } else if (actions[1].compareTo("east") == 0 || actions[1].compareTo("e") == 0 || actions[1].compareTo("right") == 0) {
+                        cellSprite = worldArray[playerX][playerY + 1];
+                    }
+                    if (cellSprite != null) {
+                        if (cellSprite.equals("#")) {
+                            if(member.inventory.inventory.get("treelogs") != null) {
+                                member.inventory.inventory.get("treelogs").quantity += 3;
+                                member.stats.stats.get("woodcutting").addExp(1);
+                            } else {
+                                Item logs = new Item("treelogs", 00001, 3);
+                                member.inventory.inventory.put("treelogs", logs);
+                                member.stats.stats.get("woodcutting").addExp(1);
+                            }
+                            try {
+                                oOut.writeObject(member.inventory);
+                                oOut.writeObject(member.stats);
+                                oOut.writeObject("+_)( " + "[System] You picked up 3 treelogs");
+                                if(member.stats.stats.get("woodcutting").getExp() % 10 == 0) {
+                                   oOut.writeObject("+_)( " + "[System] ** You've leveled up your woodcutting skill! **"); 
+                                }
+                                oOut.reset();
+                            } catch (IOException ex) {
+                            }
                         }
-                        try {
-                            oOut.writeObject(member.inventory);
-                            oOut.writeObject("+_)( " + "[System] You picked up 3 treelogs");
-                            oOut.reset();
-                        } catch (IOException ex) {
-                            ex.printStackTrace();
-                        }
+                    }
+                } else {
+                    try {
+                        oOut.writeObject("+_)( " + "[System] Chop command format: chop <direction>");
+                    } catch (IOException ex) {
                     }
                 }
             } else if (actions[0].compareTo("trade") == 0) {
-                if(NetworkServer.tradeManager.trades.containsKey(actions[1])) {
-                    Item tradingFor = NetworkServer.tradeManager.trades.get(actions[1]).tradingFor;
-                    Item trading = NetworkServer.tradeManager.trades.get(actions[1]).trading;
-                    Member tradeHost = NetworkServer.getMembers().get(actions[1]);
-                    if(member.inventory.inventory.containsKey(tradingFor.name) && member.inventory.inventory.get(tradingFor.name).quantity >= tradingFor.quantity) {
-                        //This member
-                        member.inventory.inventory.get(tradingFor.name).quantity -= tradingFor.quantity;
-                        if(member.inventory.inventory.get(tradingFor.name).quantity == 0) {
-                            member.inventory.inventory.remove(tradingFor.name);
-                        }
-                        if(member.inventory.inventory.containsKey(trading.name)){
-                           member.inventory.inventory.get(trading.name).quantity += trading.quantity; 
+                if (actions.length == 2) {
+                    if(NetworkServer.tradeManager.trades.containsKey(actions[1])) {
+                        Item tradingFor = NetworkServer.tradeManager.trades.get(actions[1]).tradingFor;
+                        Item trading = NetworkServer.tradeManager.trades.get(actions[1]).trading;
+                        Member tradeHost = NetworkServer.getMembers().get(actions[1]);
+                        if(member.inventory.inventory.containsKey(tradingFor.name) && member.inventory.inventory.get(tradingFor.name).quantity >= tradingFor.quantity) {
+                            //This member
+                            member.inventory.inventory.get(tradingFor.name).quantity -= tradingFor.quantity;
+                            if(member.inventory.inventory.get(tradingFor.name).quantity == 0) {
+                                member.inventory.inventory.remove(tradingFor.name);
+                            }
+                            if(member.inventory.inventory.containsKey(trading.name)){
+                               member.inventory.inventory.get(trading.name).quantity += trading.quantity; 
+                            } else {
+                                member.inventory.inventory.put(trading.name, new Item(trading.name, trading.itemId, trading.quantity));
+                            }
+                            try {
+                                oOut.writeObject(member.inventory);
+                                oOut.writeObject("+_)( " + "[System] Traded " + tradingFor.quantity + " " + tradingFor.name + " for " + trading.quantity + " " + trading.name + " with " + tradeHost.name);
+                                oOut.reset();
+                            } catch (IOException ex) {
+                            }
+                            //Member who hosted trade
+                            tradeHost.inventory.inventory.get(trading.name).quantity -= trading.quantity;
+                            if(tradeHost.inventory.inventory.get(trading.name).quantity == 0) {
+                                tradeHost.inventory.inventory.remove(trading.name);
+                            }
+                            if(tradeHost.inventory.inventory.containsKey(tradingFor.name)){
+                               tradeHost.inventory.inventory.get(tradingFor.name).quantity += tradingFor.quantity; 
+                            } else {
+                                if (tradingFor.quantity > 0) {
+                                tradeHost.inventory.inventory.put(tradingFor.name, new Item(tradingFor.name, tradingFor.itemId, tradingFor.quantity));
+                                }
+                            }
+                            try {
+                                NetworkServer.getWriters().get(tradeHost.name).writeObject(tradeHost.inventory);
+                                NetworkServer.getWriters().get(tradeHost.name).writeObject("+_)( " + "[System] Traded " + trading.quantity + " " + trading.name + " for " + tradingFor.quantity + " " + tradingFor.name + " with " + member.name);
+                                NetworkServer.getWriters().get(tradeHost.name).reset();
+                            } catch (IOException ex) {
+                            }
+                            NetworkServer.tradeManager.trades.remove(tradeHost.name);
+
                         } else {
-                            member.inventory.inventory.put(trading.name, new Item(trading.name, trading.itemId, trading.quantity));
-                        }
-                        try {
-                            oOut.writeObject(member.inventory);
-                            oOut.writeObject("+_)( " + "[System] Traded " + tradingFor.quantity + " " + tradingFor.name + " for " + trading.quantity + " " + trading.name + " with " + tradeHost.name);
-                            oOut.reset();
-                        } catch (IOException ex) {
-                        }
-                        //Member who hosted trade
-                        tradeHost.inventory.inventory.get(trading.name).quantity -= trading.quantity;
-                        if(tradeHost.inventory.inventory.get(trading.name).quantity == 0) {
-                            tradeHost.inventory.inventory.remove(trading.name);
-                        }
-                        if(tradeHost.inventory.inventory.containsKey(tradingFor.name)){
-                           tradeHost.inventory.inventory.get(tradingFor.name).quantity += tradingFor.quantity; 
-                        } else {
-                            if (tradingFor.quantity > 0) {
-                            tradeHost.inventory.inventory.put(tradingFor.name, new Item(tradingFor.name, tradingFor.itemId, tradingFor.quantity));
+                            try {
+                                oOut.writeObject("+_)( " + "[System] You do not meet the trade requirements.");
+                            } catch (IOException ex) {
                             }
                         }
-                        try {
-                            NetworkServer.getWriters().get(tradeHost.name).writeObject(tradeHost.inventory);
-                            NetworkServer.getWriters().get(tradeHost.name).writeObject("+_)( " + "[System] Traded " + trading.quantity + " " + trading.name + " for " + tradingFor.quantity + " " + tradingFor.name + " with " + member.name);
-                            NetworkServer.getWriters().get(tradeHost.name).reset();
-                        } catch (IOException ex) {
-                        }
-                        NetworkServer.tradeManager.trades.remove(tradeHost.name);
-                        
                     } else {
                         try {
-                            oOut.writeObject("+_)( " + "[System] You do not meet the trade requirements.");
+                            oOut.writeObject("+_)( " + "[System] That trade is not available.");
                         } catch (IOException ex) {
                         }
                     }
                 } else {
                     try {
-                        oOut.writeObject("+_)( " + "[System] That trade is not available.");
+                        oOut.writeObject("+_)( " + "[System] Trade command format: trade <member name>");
                     } catch (IOException ex) {
                     }
                 }
-                
             } else if (actions[0].compareTo("trading") == 0) {
-                int tradingQuantity = Integer.parseInt(actions[1]);
-                String tradingItemName = actions[2];
-                int tradingForQuantity = Integer.parseInt(actions[4]);
-                String tradingForItemName = actions[5];
-                if(member.inventory.inventory.containsKey(tradingItemName) && member.inventory.inventory.get(tradingItemName).quantity >= tradingQuantity) {
-                    Trade trade = new Trade();
-                    Item trading = new Item(tradingItemName, NetworkServer.items.items.get(tradingItemName).itemId, tradingQuantity);
-                    Item tradingFor = new Item(tradingForItemName, NetworkServer.items.items.get(tradingForItemName).itemId, tradingForQuantity);
-                    trade.trading = trading;
-                    trade.tradingFor = tradingFor;
-                    NetworkServer.tradeManager.trades.put(member.name, trade);
-                    NetworkServer.Broadcast("+_)( " + "[" + member.name + "] trading " + trading.quantity + " " + trading.name + " for " + tradingFor.quantity + " " + tradingFor.name);
+                if (actions.length == 6) {
+                    int tradingQuantity = Integer.parseInt(actions[1]);
+                    String tradingItemName = actions[2];
+                    int tradingForQuantity = Integer.parseInt(actions[4]);
+                    String tradingForItemName = actions[5];
+                    if(member.inventory.inventory.containsKey(tradingItemName) && member.inventory.inventory.get(tradingItemName).quantity >= tradingQuantity) {
+                        Trade trade = new Trade();
+                        Item trading = new Item(tradingItemName, NetworkServer.items.items.get(tradingItemName).itemId, tradingQuantity);
+                        Item tradingFor = new Item(tradingForItemName, NetworkServer.items.items.get(tradingForItemName).itemId, tradingForQuantity);
+                        trade.trading = trading;
+                        trade.tradingFor = tradingFor;
+                        NetworkServer.tradeManager.trades.put(member.name, trade);
+                        NetworkServer.Broadcast("+_)( " + "[" + member.name + "] trading " + trading.quantity + " " + trading.name + " for " + tradingFor.quantity + " " + tradingFor.name);
+                    } else {
+                        try {
+                            oOut.writeObject("+_)( " + "[System] You do not have a sufficient number of that item.");
+                        } catch (IOException ex) {
+                        }
+                    }
                 } else {
                     try {
-                        oOut.writeObject("+_)( " + "[System] You do not have a sufficient number of that item.");
+                        oOut.writeObject("+_)( " + "[System] Trading command format: trading <quanity> <item> for <quantity> <item>");
                     } catch (IOException ex) {
                     }
+                }
+            } else if (actions[0].compareTo("list") == 0) {
+                if (actions.length == 3) {
+                    String stats = "";
+                    if (actions[1].compareTo("stats") == 0) {
+                        if(NetworkServer.getMembers().get(actions[2]).stats != null) {
+                            for (Map.Entry<String, Skill> entry : NetworkServer.getMembers().get(actions[2]).stats.stats.entrySet()) {
+                                stats += entry.getKey() + ": " + entry.getValue().getLevel() + ", ";
+                            }
+                            try {
+                                oOut.writeObject("+_)( " + "["+actions[2]+"] stats -> " + stats);
+                            } catch (IOException ex) {
+                            }
+                        }
+                    } 
+                }
+                
+            } else {
+                try {
+                    oOut.writeObject("+_)( " + "[System] Invalid Command");
+                } catch (IOException ex) {
                 }
             }
     }
@@ -514,7 +570,6 @@ public class ServerThread extends Thread {
             outputStream.writeObject(sealedObject);
             outputStream.close();
         } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
         }
     }
     
@@ -530,7 +585,6 @@ public class ServerThread extends Thread {
             sealedObject = (SealedObject) inputStream.readObject();
             return sealedObject.getObject(cipher);
         } catch (ClassNotFoundException | IllegalBlockSizeException | BadPaddingException e) {
-            e.printStackTrace();
             return null;
         }
     }

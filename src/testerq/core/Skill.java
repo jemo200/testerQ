@@ -5,6 +5,10 @@ import java.io.Serializable;
 public class Skill implements Serializable {
     int skillExperience;
     
+    public Skill() {
+        this.skillExperience = 0;
+    }
+    
     public int getLevel() {
         if (this.skillExperience < 10) {
             return 1;
@@ -18,6 +22,14 @@ public class Skill implements Serializable {
             return 5;
         }
         return 0;
+    }
+    
+    public void addExp(int exp) {
+        this.skillExperience += exp;
+    }
+    
+    public int getExp() {
+        return this.skillExperience;
     }
     
 }

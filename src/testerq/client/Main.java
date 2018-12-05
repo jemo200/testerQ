@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package testerq.client;
 
 import java.io.Console;
@@ -22,13 +17,12 @@ import javax.net.ssl.SSLSocketFactory;
 import testerq.core.Inventory;
 import testerq.core.Item;
 import testerq.core.Member;
+import testerq.core.MemberStats;
 import testerq.core.QuestLog;
+import testerq.core.Skill;
 import testerq.core.ZoneMessage;
 import testerq.core.map.MapManager;
-/**
- *
- * @author emoj
- */
+
 public class Main {
     static String name;
     static int viewWidth = 40;
@@ -87,70 +81,127 @@ public class Main {
                     fromUser = console.readLine("action: ");
                     if (!fromUser.equals("exit")) {
                         if (fromUser.split(" ")[0].compareTo("config") == 0) {
-                            if (fromUser.split(" ")[1].compareTo("vwidth") == 0) {
-                                viewWidth = Integer.parseInt(fromUser.split(" ")[2]);
-                                clearMap();
-                                printMap();
-                            } else if (fromUser.split(" ")[1].compareTo("vheight") == 0) {
-                                viewHeight = Integer.parseInt(fromUser.split(" ")[2]);
+                            if (fromUser.split(" ").length == 3) {
+                                if (fromUser.split(" ")[1].compareTo("vwidth") == 0) {
+                                    viewWidth = Integer.parseInt(fromUser.split(" ")[2]);
+                                    clearMap();
+                                    printMap();
+                                } else if (fromUser.split(" ")[1].compareTo("vheight") == 0) {
+                                    viewHeight = Integer.parseInt(fromUser.split(" ")[2]);
+                                    clearMap();
+                                    printMap();
+                                }
+                            } else {
+                                events.push("Config command format (config types: vwidth, vheight): config <config type> <number>");
+                                events.push("Default vwidth: 40, vheight 20");
                                 clearMap();
                                 printMap();
                             }
-                        } else if (fromUser.length() > 4 && fromUser.substring(0, 3).equals("say")) {
-                            ZoneMessage zMsg = new ZoneMessage();
-                            zMsg.msg = fromUser.substring(4, fromUser.length());
-                            oOut.writeObject(zMsg);
+                        } else if (fromUser.length() >= 3 && fromUser.substring(0, 3).equals("say")) {
+                            if (fromUser.length() > 4) {
+                                ZoneMessage zMsg = new ZoneMessage();
+                                zMsg.msg = fromUser.substring(4, fromUser.length());
+                                oOut.writeObject(zMsg);
+                            } else {
+                                events.push("Say command format: say <message>");
+                                clearMap();
+                                printMap();
+                            }
                         } else if (fromUser.split(" ")[0].compareTo("inspect") == 0){
                             String[] actions = fromUser.split(" ");
-                            if (actions[1].compareTo("north") == 0 || actions[1].compareTo("n") == 0 || actions[1].compareTo("up") == 0) {
-                                //x - 1
-                                String cellSprite = currentMap[members.get(name).getPositionX() - 1][members.get(name).getPositionY()];
-                                handleInspect(cellSprite);
-                            } else if (actions[1].compareTo("south") == 0 || actions[1].compareTo("s") == 0 ||actions[1].compareTo("down") == 0) {
-                                //x + 1
-                                String cellSprite = currentMap[members.get(name).getPositionX() + 1][members.get(name).getPositionY()];
-                                handleInspect(cellSprite);
-                            } else if (actions[1].compareTo("west") == 0 || actions[1].compareTo("w") == 0 || actions[1].compareTo("left") == 0) {
-                                //y - 1
-                                String cellSprite = currentMap[members.get(name).getPositionX()][members.get(name).getPositionY() - 1];
-                                handleInspect(cellSprite);
-                            } else if (actions[1].compareTo("east") == 0 || actions[1].compareTo("e") == 0 || actions[1].compareTo("right") == 0) {
-                                //y + 1
-                                String cellSprite = currentMap[members.get(name).getPositionX()][members.get(name).getPositionY() + 1];
-                                handleInspect(cellSprite);
+                            if (actions.length == 2) {
+                                if (actions[1].compareTo("north") == 0 || actions[1].compareTo("n") == 0 || actions[1].compareTo("up") == 0) {
+                                    //x - 1
+                                    String cellSprite = currentMap[members.get(name).getPositionX() - 1][members.get(name).getPositionY()];
+                                    handleInspect(cellSprite);
+                                } else if (actions[1].compareTo("south") == 0 || actions[1].compareTo("s") == 0 ||actions[1].compareTo("down") == 0) {
+                                    //x + 1
+                                    String cellSprite = currentMap[members.get(name).getPositionX() + 1][members.get(name).getPositionY()];
+                                    handleInspect(cellSprite);
+                                } else if (actions[1].compareTo("west") == 0 || actions[1].compareTo("w") == 0 || actions[1].compareTo("left") == 0) {
+                                    //y - 1
+                                    String cellSprite = currentMap[members.get(name).getPositionX()][members.get(name).getPositionY() - 1];
+                                    handleInspect(cellSprite);
+                                } else if (actions[1].compareTo("east") == 0 || actions[1].compareTo("e") == 0 || actions[1].compareTo("right") == 0) {
+                                    //y + 1
+                                    String cellSprite = currentMap[members.get(name).getPositionX()][members.get(name).getPositionY() + 1];
+                                    handleInspect(cellSprite);
+                                }
+                            } else {
+                                events.push("Inspect command format: inspect <direction>");
+                                clearMap();
+                                printMap();
                             }
                         } else if (fromUser.split(" ")[0].compareTo("interact") == 0){
                             String[] actions = fromUser.split(" ");
-                            if (actions[1].compareTo("north") == 0 || actions[1].compareTo("n") == 0 || actions[1].compareTo("up") == 0) {
-                                //x - 1
-                                String cellSprite = currentMap[members.get(name).getPositionX() - 1][members.get(name).getPositionY()];
-                                handleInteract(cellSprite);
-                            } else if (actions[1].compareTo("south") == 0 || actions[1].compareTo("s") == 0 ||actions[1].compareTo("down") == 0) {
-                                //x + 1
-                                String cellSprite = currentMap[members.get(name).getPositionX() + 1][members.get(name).getPositionY()];
-                                handleInteract(cellSprite);
-                            } else if (actions[1].compareTo("west") == 0 || actions[1].compareTo("w") == 0 || actions[1].compareTo("left") == 0) {
-                                //y - 1
-                                String cellSprite = currentMap[members.get(name).getPositionX()][members.get(name).getPositionY() - 1];
-                                handleInteract(cellSprite);
-                            } else if (actions[1].compareTo("east") == 0 || actions[1].compareTo("e") == 0 || actions[1].compareTo("right") == 0) {
-                                //y + 1
-                                String cellSprite = currentMap[members.get(name).getPositionX()][members.get(name).getPositionY() + 1];
-                                handleInteract(cellSprite);
+                            if (actions.length == 2) {
+                                if (actions[1].compareTo("north") == 0 || actions[1].compareTo("n") == 0 || actions[1].compareTo("up") == 0) {
+                                    //x - 1
+                                    String cellSprite = currentMap[members.get(name).getPositionX() - 1][members.get(name).getPositionY()];
+                                    handleInteract(cellSprite);
+                                } else if (actions[1].compareTo("south") == 0 || actions[1].compareTo("s") == 0 ||actions[1].compareTo("down") == 0) {
+                                    //x + 1
+                                    String cellSprite = currentMap[members.get(name).getPositionX() + 1][members.get(name).getPositionY()];
+                                    handleInteract(cellSprite);
+                                } else if (actions[1].compareTo("west") == 0 || actions[1].compareTo("w") == 0 || actions[1].compareTo("left") == 0) {
+                                    //y - 1
+                                    String cellSprite = currentMap[members.get(name).getPositionX()][members.get(name).getPositionY() - 1];
+                                    handleInteract(cellSprite);
+                                } else if (actions[1].compareTo("east") == 0 || actions[1].compareTo("e") == 0 || actions[1].compareTo("right") == 0) {
+                                    //y + 1
+                                    String cellSprite = currentMap[members.get(name).getPositionX()][members.get(name).getPositionY() + 1];
+                                    handleInteract(cellSprite);
+                                }
+                            } else {
+                                events.push("Interact command format: interact <direction>");
+                                clearMap();
+                                printMap();
                             }
                         } else if (fromUser.split(" ")[0].compareTo("list") == 0){
                             String[] actions = fromUser.split(" ");
-                            String invent = "";
-                            if (actions[1].compareTo("inventory") == 0 || actions[1].compareTo("inv") == 0) {
-                                if(members.get(name).inventory != null) {
-                                    for (Map.Entry<String, Item> entry : members.get(name).inventory.inventory.entrySet()) {
-                                        invent += entry.getKey() + ": " + entry.getValue().quantity + ", ";
+                            if (actions.length == 2) {
+                                String invent = "";
+                                if (actions[1].compareTo("inventory") == 0 || actions[1].compareTo("inv") == 0) {
+                                    if(members.get(name).inventory != null) {
+                                        for (Map.Entry<String, Item> entry : members.get(name).inventory.inventory.entrySet()) {
+                                            invent += entry.getKey() + ": " + entry.getValue().quantity + ", ";
+                                        }
+                                        events.push("Inventory -> " + invent);
                                     }
-                                    events.push("Inventory -> " + invent);
+                                    clearMap();
+                                    printMap();  
+                                } else if (actions[1].compareTo("stats") == 0) {
+                                    if(members.get(name).stats != null) {
+                                        for (Map.Entry<String, Skill> entry : members.get(name).stats.stats.entrySet()) {
+                                            invent += entry.getKey() + ": " + entry.getValue().getLevel() + ", ";
+                                        }
+                                        events.push("Member stats -> " + invent);
+                                    }
+                                    clearMap();
+                                    printMap();  
+                                } else if (actions[1].compareTo("experience") == 0 || actions[1].compareTo("exp") == 0) {
+                                    if(members.get(name).stats != null) {
+                                        for (Map.Entry<String, Skill> entry : members.get(name).stats.stats.entrySet()) {
+                                            invent += entry.getKey() + ": " + entry.getValue().getExp() + ", ";
+                                        }
+                                        events.push("Skills experience -> " + invent);
+                                    }
+                                    clearMap();
+                                    printMap();  
                                 }
+                            } else if (actions.length == 3) {
+                                oOut.writeObject("command::" + fromUser);
+                            } else {
+                                events.push("List command format (types include: inventory, stats, experience): list <type> OR list stats <member name>");
                                 clearMap();
-                                printMap();  
+                                printMap();
                             }
+                        } else if (fromUser.split(" ")[0].compareTo("help") == 0){
+                            events.push("Available commands are: config, say, inspect, interact, list, chop, trade, trading. Enter these for usage info.");
+                            events.push("To exit play enter: exit");
+                            clearMap();
+                            printMap();
+                            
                         } else {
                             oOut.writeObject("command::" + fromUser);
                         }
@@ -432,6 +483,9 @@ public class Main {
                     }
                 }
                 Main.signedIn = true;
+                events.push("Available commands are: config, say, inspect, interact, list, chop, trade, trading. Enter these for usage info.");
+                events.push("To exit play, enter: exit");
+                events.push("For help enter: help");
                 
                 while ((objIn = ins.readObject()) != null) {
                     if (objIn.getClass().toString().contains("java.lang.String")) {
@@ -456,6 +510,9 @@ public class Main {
                     } else if (objIn.getClass().toString().contains("testerq.core.QuestLog")) {
                         QuestLog ql = (QuestLog)objIn;
                         members.get(name).questLog = ql;
+                    } else if (objIn.getClass().toString().contains("testerq.core.MemberStats")) {
+                        MemberStats stats = (MemberStats)objIn;
+                        members.get(name).stats = stats;
                     }
                 }
                 

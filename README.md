@@ -33,6 +33,12 @@ Choose avatar when prompted (If new user)
 enter: exit
 This will log you out and stop the client (progress is saved automatically)
 
+enter: help
+This will list the available commands
+
+enter: <command name>
+This will give you usage instructions on any command
+
 when in game world issue commands such as "move north" OR "mv up 3" OR "mv east 5" this moves around the world
 format is move <DIRECTION>
 
@@ -51,6 +57,12 @@ This will chop a tree (#) and yield logs if there is a tree in the direction you
 
 enter: list inventory OR list inv
 This will display a event log with your current inventory
+
+enter: list stats OR list stats <member name>
+This will display a event log with your current stats OR the stats of a fellow member
+
+enter: list experience OR list exp
+This will display a event log with your current skill experience
 
 enter: trading <NUMBER> <ITEM NAME> for <NUMBER> <ITEM NAME>
 This will propose a trade

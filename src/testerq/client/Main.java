@@ -270,7 +270,7 @@ public class Main {
     }
     
     private static void printMap() {
-        //clearConsole();
+        clearConsole();
         //PRINT MAP
         System.out.println(System.getProperty("line.separator"));
         Member member = members.get(name);
